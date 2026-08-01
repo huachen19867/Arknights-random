@@ -1,0 +1,11 @@
+{
+  "generatedAt": "2026-08-01T12:57:25.960Z",
+  "input": "scripts/data/prts-operators.json",
+  "existingCount": 423,
+  "missingCount": 0,
+  "differentCount": 0,
+  "updateExisting": false,
+  "updatePortraitUrl": false,
+  "updateSkills": false,
+  "differences": []
+}

@@ -1,0 +1,37 @@
+{
+  "name": "arknights-operator-randomizer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "data:test": "node scripts/self-test.mjs",
+    "data:prts": "node scripts/sync-prts.mjs",
+    "data:prts:samples": "node scripts/check-prts-samples.mjs",
+    "data:prts:recheck": "node scripts/sync-prts.mjs --recheck-portraits --recheck-skills",
+    "data:base:preview": "node scripts/base-upsert.mjs",
+    "data:base:skills:preview": "node scripts/base-upsert.mjs --update-skills",
+    "data:base:skills:write": "node scripts/base-upsert.mjs --update-skills --write",
+    "data:base:write": "node scripts/base-upsert.mjs --write",
+    "data:base:export": "node scripts/base-export.mjs"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "6.0.5",
+    "typescript": "7.0.2",
+    "vite": "8.2.0",
+    "vitest": "4.1.10"
+  }
+}

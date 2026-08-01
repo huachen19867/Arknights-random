@@ -1,0 +1,11 @@
+{
+  "type": "number",
+  "name": "星级",
+  "style": {
+    "type": "plain",
+    "precision": 0,
+    "percentage": false,
+    "thousands_separator": false
+  },
+  "description": "显示星级，取值 1–6"
+}

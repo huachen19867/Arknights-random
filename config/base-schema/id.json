@@ -1,0 +1,6 @@
+{
+  "type": "text",
+  "name": "干员ID",
+  "style": { "type": "plain" },
+  "description": "以 PRTS data-id 为基础的稳定主键；同一 data-id 多形态时追加职业，例如 R001:术师"
+}

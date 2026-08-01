@@ -1,0 +1,6 @@
+{
+  "type": "datetime",
+  "name": "同步时间",
+  "style": { "format": "yyyy-MM-dd HH:mm" },
+  "description": "该条干员数据最近一次同步时间"
+}

@@ -1,0 +1,48 @@
+import type { Operator } from '../types'
+
+/**
+ * 仅在 /data/operators.json 尚未生成或不可用时启用。
+ * 正式数据由飞书 Base 导出流程覆盖，不要把这里当作维护入口。
+ */
+export const fallbackOperators: Operator[] = [
+  { id: 'char_285_medic2', name: 'Lancet-2', rarity: 1, profession: '医疗' },
+  { id: 'char_286_cast3', name: 'Castle-3', rarity: 1, profession: '近卫' },
+  { id: 'char_376_therex', name: 'THRM-EX', rarity: 1, profession: '特种' },
+  { id: 'char_4093_frston', name: 'Friston-3', rarity: 1, profession: '重装' },
+  { id: 'char_502_nblade', name: '夜刀', rarity: 2, profession: '先锋' },
+  { id: 'char_503_rang', name: '巡林者', rarity: 2, profession: '狙击' },
+  { id: 'char_501_durin', name: '杜林', rarity: 2, profession: '术师' },
+  { id: 'char_500_noirc', name: '黑角', rarity: 2, profession: '重装' },
+  { id: 'char_123_fang', name: '芬', rarity: 3, profession: '先锋' },
+  { id: 'char_208_melan', name: '玫兰莎', rarity: 3, profession: '近卫' },
+  { id: 'char_122_beagle', name: '米格鲁', rarity: 3, profession: '重装' },
+  { id: 'char_124_kroos', name: '克洛丝', rarity: 3, profession: '狙击' },
+  { id: 'char_009_12fce', name: '12F', rarity: 3, profession: '术师' },
+  { id: 'char_212_ansel', name: '安赛尔', rarity: 3, profession: '医疗' },
+  { id: 'char_281_popka', name: '泡普卡', rarity: 3, profession: '近卫' },
+  { id: 'char_183_skgoat', name: '梓兰', rarity: 3, profession: '辅助' },
+  { id: 'char_151_myrtle', name: '桃金娘', rarity: 4, profession: '先锋' },
+  { id: 'char_225_haak', name: '宴', rarity: 4, profession: '近卫' },
+  { id: 'char_196_sunbr', name: '古米', rarity: 4, profession: '重装' },
+  { id: 'char_133_mm', name: '梅', rarity: 4, profession: '狙击' },
+  { id: 'char_328_cammou', name: '卡达', rarity: 4, profession: '术师' },
+  { id: 'char_181_flower', name: '调香师', rarity: 4, profession: '医疗' },
+  { id: 'char_258_podego', name: '波登可', rarity: 4, profession: '辅助' },
+  { id: 'char_272_strong', name: '孑', rarity: 4, profession: '特种' },
+  { id: 'char_102_texas', name: '德克萨斯', rarity: 5, profession: '先锋' },
+  { id: 'char_140_whitew', name: '拉普兰德', rarity: 5, profession: '近卫' },
+  { id: 'char_148_nearl', name: '临光', rarity: 5, profession: '重装' },
+  { id: 'char_129_bluep', name: '蓝毒', rarity: 5, profession: '狙击' },
+  { id: 'char_002_amiya', name: '阿米娅', rarity: 5, profession: '术师' },
+  { id: 'char_128_plosis', name: '白面鸮', rarity: 5, profession: '医疗' },
+  { id: 'char_254_vodfox', name: '巫恋', rarity: 5, profession: '辅助' },
+  { id: 'char_144_red', name: '红', rarity: 5, profession: '特种' },
+  { id: 'char_222_bpipe', name: '风笛', rarity: 6, profession: '先锋' },
+  { id: 'char_017_huang', name: '煌', rarity: 6, profession: '近卫' },
+  { id: 'char_202_demkni', name: '塞雷娅', rarity: 6, profession: '重装' },
+  { id: 'char_103_angel', name: '能天使', rarity: 6, profession: '狙击' },
+  { id: 'char_180_amgoat', name: '艾雅法拉', rarity: 6, profession: '术师' },
+  { id: 'char_003_kalts', name: '凯尔希', rarity: 6, profession: '医疗' },
+  { id: 'char_291_aglina', name: '安洁莉娜', rarity: 6, profession: '辅助' },
+  { id: 'char_250_phatom', name: '傀影', rarity: 6, profession: '特种' },
+]

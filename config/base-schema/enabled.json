@@ -1,0 +1,5 @@
+{
+  "type": "checkbox",
+  "name": "启用",
+  "description": "关闭后不导出到网页候选池"
+}

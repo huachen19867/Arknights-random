@@ -1,0 +1,64 @@
+{
+  "generatedAt": "2026-08-01T12:56:57.312Z",
+  "output": "scripts/data/prts-operators.json",
+  "options": {
+    "allowRemovals": false,
+    "maximumAdditions": 50,
+    "maximumChanges": 50,
+    "recheckPortraits": true,
+    "recheckSkills": true
+  },
+  "portraitResolution": {
+    "reusedElite2": 0,
+    "checked": 423
+  },
+  "skillResolution": {
+    "reused": 0,
+    "fetched": 423
+  },
+  "validation": {
+    "ok": true,
+    "count": 423,
+    "errors": [],
+    "warnings": [],
+    "rarityCounts": {
+      "1": 11,
+      "2": 5,
+      "3": 17,
+      "4": 61,
+      "5": 195,
+      "6": 134
+    },
+    "professionCounts": {
+      "先锋": 41,
+      "近卫": 84,
+      "重装": 47,
+      "狙击": 58,
+      "术师": 59,
+      "医疗": 39,
+      "辅助": 47,
+      "特种": 48
+    },
+    "portraitCounts": {
+      "elite1": 33,
+      "elite2": 390
+    },
+    "skillCounts": {
+      "0": 16,
+      "1": 17,
+      "2": 255,
+      "3": 135,
+      "unknown": 0
+    }
+  },
+  "transitionErrors": [],
+  "previousCount": 423,
+  "nextCount": 423,
+  "unchangedCount": 423,
+  "additionCount": 0,
+  "removalCount": 0,
+  "changeCount": 0,
+  "additions": [],
+  "removals": [],
+  "changes": []
+}

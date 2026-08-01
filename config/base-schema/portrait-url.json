@@ -1,0 +1,6 @@
+{
+  "type": "text",
+  "name": "立绘URL",
+  "style": { "type": "url" },
+  "description": "用于网页卡片的透明立绘地址，可在飞书中人工覆盖"
+}

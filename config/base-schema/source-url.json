@@ -1,0 +1,6 @@
+{
+  "type": "text",
+  "name": "来源URL",
+  "style": { "type": "url" },
+  "description": "PRTS 干员详情页"
+}

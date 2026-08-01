@@ -1,0 +1,16 @@
+{
+  "type": "select",
+  "name": "职业",
+  "multiple": false,
+  "options": [
+    { "name": "先锋", "hue": "Wathet" },
+    { "name": "近卫", "hue": "Red" },
+    { "name": "重装", "hue": "Blue" },
+    { "name": "狙击", "hue": "Orange" },
+    { "name": "术师", "hue": "Purple" },
+    { "name": "医疗", "hue": "Green" },
+    { "name": "辅助", "hue": "Turquoise" },
+    { "name": "特种", "hue": "Carmine" }
+  ],
+  "description": "明日方舟八大职业"
+}

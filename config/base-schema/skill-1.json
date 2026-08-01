@@ -1,0 +1,6 @@
+{
+  "type": "text",
+  "name": "技能1",
+  "style": { "type": "plain" },
+  "description": "干员第1技能名称；用于随机技能，人工维护时请保留技能序号"
+}

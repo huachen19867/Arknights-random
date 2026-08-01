@@ -1,0 +1,21 @@
+{
+  "wikiUrl": "https://my.feishu.cn/wiki/Zb7KwXVTDiYLDqke6CkcsCnpnwc",
+  "baseToken": "AamibXOoha1bVmssWOQcTsSBncg",
+  "tableId": "tblEbnx3MFvghTfD",
+  "tableName": "干员数据",
+  "fields": {
+    "id": "干员ID",
+    "name": "名称",
+    "rarity": "星级",
+    "profession": "职业",
+    "enabled": "启用",
+    "portraitUrl": "立绘URL",
+    "sourceUrl": "来源URL",
+    "syncedAt": "同步时间",
+    "skill1": "技能1",
+    "skill2": "技能2",
+    "skill3": "技能3",
+    "skillsVerified": "技能已核验",
+    "portraitAttachment": "立绘附件"
+  }
+}

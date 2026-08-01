@@ -1,0 +1,5 @@
+{
+  "type": "attachment",
+  "name": "立绘附件",
+  "description": "预留字段；当前导出器不读取附件，人工立绘使用立绘URL"
+}

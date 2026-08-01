@@ -1,0 +1,6 @@
+{
+  "type": "text",
+  "name": "技能2",
+  "style": { "type": "plain" },
+  "description": "干员第2技能名称；无第2技能时留空"
+}
