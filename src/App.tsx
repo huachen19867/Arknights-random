@@ -57,7 +57,12 @@ export function App() {
     }
 
     try {
-      const selected = drawOperatorResults(candidates, settings.count, settings.randomSkill)
+      const selected = drawOperatorResults(
+        candidates,
+        settings.count,
+        settings.randomSkill,
+        settings.randomModule,
+      )
       setResults(selected)
       setDrawing(true)
       const drawNotice =
@@ -76,7 +81,19 @@ export function App() {
               .join('，') + '。'
           : '已为每名干员独立随机一个技能。'
         : ''
-      setNotice([drawNotice, skillNotice].filter(Boolean).join(' '))
+      const missingModuleCount = selected.filter((result) => result.moduleState === 'missing').length
+      const unavailableModuleCount = selected.filter((result) => result.moduleState === 'unavailable').length
+      const moduleNotice = settings.randomModule
+        ? missingModuleCount > 0 || unavailableModuleCount > 0
+          ? [
+              missingModuleCount > 0 ? `${missingModuleCount} 名干员缺少模组数据` : '',
+              unavailableModuleCount > 0 ? `${unavailableModuleCount} 名干员没有可用模组` : '',
+            ]
+              .filter(Boolean)
+              .join('，') + '。'
+          : '已为每名干员独立随机一个模组。'
+        : ''
+      setNotice([drawNotice, skillNotice, moduleNotice].filter(Boolean).join(' '))
       drawTimer.current = window.setTimeout(() => setDrawing(false), 900)
     } catch (error) {
       setResults([])

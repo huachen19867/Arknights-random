@@ -566,6 +566,48 @@ select:focus-visible {
   color: #dce1e0;
 }
 
+.operator-card__module {
+  position: absolute;
+  z-index: 7;
+  right: 4%;
+  bottom: 27.5%;
+  left: 4%;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  padding: 5px 8px;
+  background: rgba(29, 35, 37, 0.92);
+  color: #f2f5f4;
+  border-left: 3px solid var(--cyan);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  box-shadow: 0 4px 9px rgba(22, 28, 30, 0.28);
+}
+
+.operator-card__module span {
+  flex: 0 0 auto;
+  font-family: Consolas, monospace;
+  font-size: clamp(7px, 0.55vw, 9px);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.operator-card__module strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: clamp(8px, 0.7vw, 11px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.operator-card__module--muted {
+  justify-content: center;
+  background: rgba(29, 35, 37, 0.72);
+  color: #b9c2c0;
+  border-left: none;
+}
+
 .operator-card__footer {
   position: absolute;
   z-index: 6;
@@ -818,6 +860,7 @@ select:focus-visible {
 
 .setting-section,
 .setting-summary {
+  grid-column: 1 / -1;
   position: relative;
   padding: clamp(18px, 2vw, 30px);
   border: 1px solid rgba(23, 29, 31, 0.16);
@@ -977,10 +1020,17 @@ select:focus-visible {
 }
 
 .setting-section--count {
+  grid-column: 1 / -1;
   min-height: 190px;
 }
 
 .setting-section--skill {
+  grid-column: 1 / 2;
+  min-height: 190px;
+}
+
+.setting-section--module {
+  grid-column: 2 / 3;
   min-height: 190px;
 }
 
@@ -1525,7 +1575,11 @@ select:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .setting-section--wide {
+  .setting-section--wide,
+  .setting-section--count,
+  .setting-section--skill,
+  .setting-section--module,
+  .setting-summary {
     grid-column: auto;
   }
 

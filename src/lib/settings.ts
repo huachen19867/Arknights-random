@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS: DrawSettings = {
   count: 12,
   bannedIds: [],
   randomSkill: false,
+  randomModule: false,
 }
 
 type StorageLike = Pick<Storage, 'getItem' | 'setItem'>
@@ -39,8 +40,9 @@ export function normalizeSettings(value: unknown): DrawSettings {
     ? [...new Set(input.bannedIds.filter((item): item is string => typeof item === 'string'))]
     : []
   const randomSkill = input.randomSkill === true
+  const randomModule = input.randomModule === true
 
-  return { rarities, professions, count, bannedIds, randomSkill }
+  return { rarities, professions, count, bannedIds, randomSkill, randomModule }
 }
 
 export function loadSettings(storage?: StorageLike): DrawSettings {

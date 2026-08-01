@@ -1,3 +1,4 @@
+﻿import { readFileSync } from 'node:fs';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -15,6 +16,18 @@ export const PROFESSIONS = Object.freeze([
 
 export const BASE_SKILL_FIELDS = Object.freeze(['技能1', '技能2', '技能3']);
 export const BASE_SKILL_VERIFIED_FIELD = '技能已核验';
+export const BASE_MODULE_VERIFIED_FIELD = '模组已核验';
+export const MODULE_TABLE_NAME = '干员模组';
+export const MODULE_FIELDS = Object.freeze([
+  '模组ID',
+  '干员ID',
+  '模组名称',
+  '分支类型码',
+  '展示顺序',
+  '启用',
+  '来源URL',
+  '同步时间',
+]);
 
 export const BASE_FIELDS = Object.freeze([
   '干员ID',
@@ -27,7 +40,35 @@ export const BASE_FIELDS = Object.freeze([
   '同步时间',
   ...BASE_SKILL_FIELDS,
   BASE_SKILL_VERIFIED_FIELD,
+  BASE_MODULE_VERIFIED_FIELD,
 ]);
+
+export function verifyModuleFieldSchema(fields) {
+  const byName = new Map(fields.map((field) => [
+    field?.field_name ?? field?.name ?? field?.fieldName,
+    field,
+  ]));
+  const missing = MODULE_FIELDS.filter((name) => !byName.has(name));
+  if (missing.length > 0) throw new Error(`模组子表缺少字段: ${missing.join(', ')}`);
+  const expectedTypes = {
+    '模组ID': 'text',
+    '干员ID': 'text',
+    '模组名称': 'text',
+    '分支类型码': 'text',
+    '展示顺序': 'number',
+    '启用': 'checkbox',
+    '来源URL': 'url',
+    '同步时间': 'datetime',
+  };
+  for (const [name, expected] of Object.entries(expectedTypes)) {
+    if (expected === 'url') {
+      if (byName.get(name)?.style?.type !== 'url') throw new Error(`模组字段 ${name} 必须为 URL 样式文本`);
+      continue;
+    }
+    const actual = byName.get(name)?.type;
+    if (actual !== expected) throw new Error(`模组字段 ${name} 类型应为 ${expected}，实际为 ${actual}`);
+  }
+}
 
 export function verifyBaseFieldSchema(fields) {
   const byName = new Map(fields.map((field) => [
@@ -50,6 +91,7 @@ export function verifyBaseFieldSchema(fields) {
     '技能2': 'text',
     '技能3': 'text',
     '技能已核验': 'checkbox',
+    '模组已核验': 'checkbox',
   };
   for (const [name, expected] of Object.entries(expectedTypes)) {
     const actual = byName.get(name)?.type;
@@ -193,6 +235,52 @@ export function parsePrtsSkills(html) {
   return skills.sort((left, right) => left.index - right.index);
 }
 
+export function parsePrtsModules(html) {
+  const marker = html.search(/<span\b[^>]*\bid=["']模组["'][^>]*>/i);
+  if (marker < 0) return [];
+  const tail = html.slice(marker);
+  const nextHeadingOffset = tail.slice(1).search(/<h2\b/i);
+  const section = nextHeadingOffset < 0 ? tail : tail.slice(0, nextHeadingOffset + 1);
+  const headings = [...section.matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>/gi)];
+  const modules = [];
+  const seenCodes = new Set();
+  for (const heading of headings) {
+    const blockEnd = headings.find((candidate) => candidate.index > heading.index)?.index ?? section.length;
+    const blockContent = section.slice(heading.index, blockEnd);
+    const title = heading[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    if (!title) throw new Error('PRTS 模组章节存在空标题，页面结构可能已改变');
+    const visibleContent = blockContent
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ');
+    const isBadge = title.includes('证章') && !visibleContent.includes('equiptemplate');
+    if (isBadge) continue;
+    if (!visibleContent.includes('equiptemplate')) {
+      throw new Error(`PRTS 模组章节无法识别标题“${title}”的实体结构，页面结构可能已改变`);
+    }
+    const clean = visibleContent
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const titlePos = clean.indexOf(`${title} `);
+    const near = titlePos >= 0 ? clean.slice(titlePos + title.length, titlePos + title.length + 200) : '';
+    const codePattern = /\b[A-Z]{2,5}-[A-Z\u0391-\u03c9](?![A-Z0-9\u0391-\u03c9-])/;
+    const codeMatch = near.match(codePattern) ?? clean.match(codePattern);
+    const code = codeMatch ? codeMatch[0] : '';
+    if (!code) throw new Error(`PRTS 模组“${title}”缺少类型码，页面结构可能已改变`);
+    if (seenCodes.has(code)) throw new Error(`PRTS 模组类型码重复: ${code}`);
+    seenCodes.add(code);
+    modules.push({
+      index: modules.length + 1,
+      name: title,
+      code,
+    });
+  }
+  if (modules.length === 0) {
+    throw new Error('PRTS 模组章节存在但解析不到模组实体，页面结构可能已改变');
+  }
+  return modules;
+}
+
 function operatorPrtsId(operator) {
   const value = String(operator?.prtsId ?? operator?.id ?? '').trim();
   return value.includes(':') ? value.slice(0, value.indexOf(':')) : value;
@@ -325,6 +413,7 @@ const VERSIONED_OPERATOR_FIELDS = Object.freeze([
   'portraitKind',
   'sourceUrl',
   'skills',
+  'modules',
 ]);
 
 function versionedValue(operator, field) {
@@ -423,6 +512,21 @@ export function normalizeDataset(value) {
   return value;
 }
 
+export function readPortraitExceptions(filePath) {
+  let value = {};
+  try {
+    value = JSON.parse(readFileSync(filePath, 'utf8').replace(/^\uFEFF/, ''));
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
+  for (const [name, item] of Object.entries(value)) {
+    if (!item || (item.fallback !== 'elite2' && item.fallback !== 'avatar')) {
+      throw new Error(`例外表 ${name} 的 fallback 只能是 elite2 或 avatar`);
+    }
+  }
+  return value;
+}
+
 export async function readDataset(filePath) {
   return normalizeDataset(JSON.parse(await readFile(filePath, 'utf8')));
 }
@@ -430,6 +534,8 @@ export async function readDataset(filePath) {
 export function validateDataset(dataset, options = {}) {
   const normalized = normalizeDataset(dataset);
   const minimumCount = Number(options.minimumCount ?? 1);
+  const strictPortraitKinds = new Set(options.strictPortraitKinds ?? []);
+  const portraitKindExceptions = new Set(options.portraitKindExceptions ?? []);
   const errors = [];
   const warnings = [];
   const ids = new Set();
@@ -438,6 +544,7 @@ export function validateDataset(dataset, options = {}) {
   const professionCounts = Object.fromEntries(PROFESSIONS.map((profession) => [profession, 0]));
   const portraitCounts = {};
   const skillCounts = { unknown: 0, ...Object.fromEntries(Array.from({ length: 4 }, (_, count) => [count, 0])) };
+  const moduleCounts = { unknown: 0 };
 
   if (normalized.operators.length < minimumCount) {
     errors.push(`干员数 ${normalized.operators.length} 小于安全下限 ${minimumCount}`);
@@ -485,8 +592,44 @@ export function validateDataset(dataset, options = {}) {
         }
       });
     }
+    if (operator.modules === undefined && options.allowUnknownModules) {
+      moduleCounts.unknown += 1;
+    } else if (!Array.isArray(operator.modules) || operator.modules.length > 30) {
+      errors.push(`${label}.modules 必须是最多 30 项的数组`);
+    } else {
+      moduleCounts[operator.modules.length] = (moduleCounts[operator.modules.length] ?? 0) + 1;
+      const moduleIds = new Set();
+      operator.modules.forEach((module, moduleOffset) => {
+        if (!module || typeof module !== 'object') {
+          errors.push(`${label}.modules[${moduleOffset}] 不是对象`);
+          return;
+        }
+        if (typeof module.id !== 'string' || !module.id.trim()) {
+          errors.push(`${label}.modules[${moduleOffset}].id 缺失`);
+        } else if (moduleIds.has(module.id)) {
+          errors.push(`${label}.modules[${moduleOffset}].id 重复: ${module.id}`);
+        } else {
+          moduleIds.add(module.id);
+        }
+        if (module.index !== moduleOffset + 1) {
+          errors.push(`${label}.modules[${moduleOffset}].index 必须连续编号 index=${moduleOffset + 1}`);
+        }
+        if (typeof module.name !== 'string' || !module.name.trim()) {
+          errors.push(`${label}.modules[${moduleOffset}].name 缺失`);
+        }
+        if (module.code !== undefined && (typeof module.code !== 'string' || !module.code.trim())) {
+          errors.push(`${label}.modules[${moduleOffset}].code 非法`);
+        }
+        if (module.sourceUrl !== undefined && (typeof module.sourceUrl !== 'string' || !/^https:\/\//.test(module.sourceUrl))) {
+          errors.push(`${label}.modules[${moduleOffset}].sourceUrl 不是 HTTPS URL`);
+        }
+      });
+    }
     const portraitKind = operator.portraitKind ?? 'unknown';
     portraitCounts[portraitKind] = (portraitCounts[portraitKind] ?? 0) + 1;
+    if (strictPortraitKinds.size > 0 && strictPortraitKinds.has(portraitKind) && !portraitKindExceptions.has(operator.id)) {
+      errors.push(`${label}.portraitKind=${portraitKind} 是禁止的精二立绘，请完成精零迁移或登记例外`);
+    }
   }
 
   for (const profession of PROFESSIONS) {
@@ -509,6 +652,7 @@ export function validateDataset(dataset, options = {}) {
     professionCounts,
     portraitCounts,
     skillCounts,
+    moduleCounts,
   };
 }
 
@@ -565,7 +709,7 @@ export function inferPortraitKind(url) {
   const decoded = decodeURIComponent(String(url));
   if (decoded.includes('头像_')) return 'avatar';
   if (decoded.includes('_2.png')) return 'elite2';
-  if (decoded.includes('_1.png')) return 'elite1';
+  if (decoded.includes('_1.png')) return 'elite0';
   return 'custom';
 }
 

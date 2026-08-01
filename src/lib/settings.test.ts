@@ -24,19 +24,20 @@ function memoryStorage(initial?: string) {
 }
 
 describe('settings', () => {
-  it('默认全选星级与职业、抽取 12 人，并关闭随机技能', () => {
+  it('默认全选星级与职业、抽取 12 人，并关闭随机技能与随机模组', () => {
     const loaded = loadSettings(memoryStorage())
     expect(loaded.rarities).toEqual(RARITIES)
     expect(loaded.professions).toEqual(PROFESSIONS)
     expect(loaded.count).toBe(12)
     expect(loaded.bannedIds).toEqual([])
     expect(loaded.randomSkill).toBe(false)
+    expect(loaded.randomModule).toBe(false)
   })
 
   it('持久化设置并去重 Ban id', () => {
     const storage = memoryStorage()
-    saveSettings({ ...DEFAULT_SETTINGS, count: 7, bannedIds: ['a', 'a', 'b'], randomSkill: true }, storage)
-    expect(loadSettings(storage)).toMatchObject({ count: 7, bannedIds: ['a', 'b'], randomSkill: true })
+    saveSettings({ ...DEFAULT_SETTINGS, count: 7, bannedIds: ['a', 'a', 'b'], randomSkill: true, randomModule: true }, storage)
+    expect(loadSettings(storage)).toMatchObject({ count: 7, bannedIds: ['a', 'b'], randomSkill: true, randomModule: true })
   })
 
   it('修正越界人数并过滤未知枚举', () => {
@@ -53,6 +54,7 @@ describe('settings', () => {
       count: 12,
       bannedIds: ['valid'],
       randomSkill: false,
+      randomModule: false,
     })
   })
 
@@ -61,6 +63,14 @@ describe('settings', () => {
       JSON.stringify({ rarities: [6], professions: ['近卫'], count: 1, bannedIds: [] }),
     )
     expect(loadSettings(storage).randomSkill).toBe(false)
+  })
+
+  it('旧版设置没有 randomModule 时兼容为关闭', () => {
+    const storage = memoryStorage(
+      JSON.stringify({ rarities: [6], professions: ['近卫'], count: 1, bannedIds: [], randomSkill: true }),
+    )
+    expect(loadSettings(storage).randomModule).toBe(false)
+    expect(loadSettings(storage).randomSkill).toBe(true)
   })
 
   it('损坏的 JSON 自动回退默认值', () => {

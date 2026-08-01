@@ -14,7 +14,7 @@ node .\scripts\check-prts-samples.mjs
 
 PRTS 中阿米娅三种形态的 `data-id` 都是 `R001`。脚本保留 `prtsId: "R001"`，并以旧数据对账维持稳定主键；首次分别使用 `R001:术师`、`R001:医疗`和 `R001:近卫`。对账按名称+职业精确匹配、同组名称唯一匹配、同职业唯一匹配、单旧/单新依次收敛，因此改职业和单形态变多形态不会无故改写旧 ID；仍有歧义时由 removal guard 中止，不猜测。
 
-同步默认复用 URL 完全一致的旧精二立绘和已有的完整 `skills` 数组；精一/头像仍重新 HEAD 校验。新增干员、缺少技能或姓名/星级/职业变化时才重新抓详情。只有 `--recheck-portraits` / `--recheck-skills` 才全量复查。没有内容变化的干员保留原 `updatedAt`。
+正式立绘统一为精零（`立绘_<名称>_1.png`，kind 记作 `elite0`，PRTS 中精英化 0/1 共用）。同步默认复用 URL 完全一致的精零地址；800px 缩略图不存在时降级采用原图 URL（kind 仍为 elite0）。无精零立绘文件的特例干员（如阿米娅替代形态）通过 `config/portrait-exceptions.json` 登记例外回退到精二，回退原因必须书面写明。新增干员、缺少技能/模组或姓名/星级/职业变化时才重新抓详情页；一次抓取同时解析技能与模组。只有 `--recheck-portraits` / `--recheck-skills` / `--recheck-modules` 才全量复查，其中 `--recheck-modules` 遇到“上次有模组、本次解析为空”会直接报错防止页面漂移。没有内容变化的干员保留原 `updatedAt`。
 
 旧版到新版的变化会先经过迁移保护：默认禁止干员消失，单次最多新增 50 名、变更 50 名；异常时只写差异报告，不覆盖上一份可用数据。确认真实大版本变化后才显式调整门槛。
 
@@ -22,13 +22,13 @@ PRTS 中阿米娅三种形态的 `data-id` 都是 `R001`。脚本保留 `prtsId:
 
 ```powershell
 node .\scripts\sync-prts.mjs --output .\scripts\data\prts-operators.json --concurrency 4 --width 800 --quality 80
-node .\scripts\sync-prts.mjs --recheck-portraits --recheck-skills
+node .\scripts\sync-prts.mjs --recheck-portraits --recheck-skills --recheck-modules
 node .\scripts\sync-prts.mjs --allow-removals --max-additions 80 --max-changes 80
 ```
 
 ## 2. Base 字段约定
 
-目标表必须存在以下中文字段：`干员ID`、`名称`、`星级`、`职业`、`启用`、`立绘URL`、`来源URL`、`同步时间`、`技能1`、`技能2`、`技能3`、`技能已核验`。前三个技能字段是普通文本，“技能已核验”是复选框；其余类型依次为文本、文本、数字、单选、复选框、超链接、超链接、日期时间。职业单选须预先建好八个选项。当前 Base 另有预留字段“立绘附件”，但导出器不会读取、下载或发布附件；人工立绘请使用无需鉴权的 HTTPS URL。
+目标表必须存在以下中文字段：`干员ID`、`名称`、`星级`、`职业`、`启用`、`立绘URL`、`来源URL`、`同步时间`、`技能1`、`技能2`、`技能3`、`技能已核验`、`模组已核验`。前三个技能字段是普通文本，“技能已核验”和“模组已核验”是复选框；其余类型依次为文本、文本、数字、单选、复选框、超链接、超链接、日期时间。职业单选须预先建好八个选项。当前 Base 另有预留字段“立绘附件”，但导出器不会读取、下载或发布附件；人工立绘请使用无需鉴权的 HTTPS URL。
 
 PowerShell 中设置环境变量：
 
@@ -48,6 +48,27 @@ $env:LARK_BASE_TOKEN = $config.baseToken
 $env:LARK_TABLE_ID = $config.tableId
 $env:LARK_AS = 'user'
 ```
+
+## 2.5 模组子表与数据组
+
+模组数据不复制成“模组1–3”固定列。同一 Base 内建子表 `干员模组`，一行一个模组，字段为 `模组ID`、`干员ID`、`模组名称`、`分支类型码`、`展示顺序`、`启用`、`来源URL`、`同步时间`。`模组ID` 是稳定主键（干员稳定 ID + 分支类型码，如 `R001:医疗:INC-X`）；`干员ID` 是普通文本外键，脚本会严格校验它存在于主表。主表的 `模组已核验` 表达三态：子表有记录且已勾选表示已收录；子表无记录且已勾选表示该干员确实没有模组；未勾选表示未知。
+
+初始化 Base（建字段和子表）使用幂等脚本，默认只打印计划：
+
+```powershell
+npm.cmd run data:base:modules:init        # dry-run，只读
+npm.cmd run data:base:modules:init:yes    # 实际创建字段与子表
+```
+
+模组是独立数据组，不与 `--update-existing` 或 `--update-skills` 混写。预览/写入命令：
+
+```powershell
+npm.cmd run data:base:modules:preview     # 主表核验 + 子表差异
+npm.cmd run data:base:modules:write       # 只新增缺失模组行 + 勾选核验
+npm.cmd run data:base:modules:update      # 额外更新已有模组行的字段变化
+```
+
+默认只新增缺失模组并报告已有差异；更新已有行需 `--update-module-existing` 显式授权。官方移除的模组永远不物理删除，只在报告中列出，由人工判断后取消“启用”或确认删除。主表立绘迁移（精零）仍走 `--update-existing --update-portrait-url`，技能仍走 `--update-skills`。
 
 ## 3. 批量 upsert 到 Base
 
@@ -81,6 +102,6 @@ node .\scripts\base-upsert.mjs --update-skills --write
 node .\scripts\base-export.mjs
 ```
 
-默认串行分页读取全表，只导出“启用”复选框 CellValue 严格等于 `true` 的记录，校验后原子写入 `public/data/operators.json`。只有“技能已核验”也严格等于 `true` 时才输出 `skills`；三个技能都空且已核验会输出 `skills: []`，未核验则省略 `skills` 表示未知。技能必须从 1 开始连续填写。全空行会跳过，任何已填但缺少必需字段的半填行会立即报错，避免把脏数据发布到前端。当前导出的 `portrait` 保持为 Base 中维护的 HTTPS URL；完全离线发布所需的图片本地化尚未实现。
+默认串行分页读取主表，再按表名“干员模组”找到子表并聚合模组，只导出“启用”复选框 CellValue 严格等于 `true` 的记录，校验后原子写入 `public/data/operators.json`。只有“技能已核验”也严格等于 `true` 时才输出 `skills`；三个技能都空且已核验会输出 `skills: []`，未核验则省略 `skills` 表示未知。技能必须从 1 开始连续填写。模组同理：只有“模组已核验”为 true 才输出 `modules`（子表有行则聚合，无行则 `modules: []`），未核验省略字段表示未知。导出器拒绝孤儿模组、重复模组 ID、未知干员和展示顺序不连续。全空行会跳过，任何已填但缺少必需字段的半填行会立即报错，避免把脏数据发布到前端。当前导出的 `portrait` 保持为 Base 中维护的 HTTPS URL；完全离线发布所需的图片本地化尚未实现。
 
-三个 JSON 入口共用同一数据集形状：顶层包含 `schemaVersion`、`generatedAt`、`source`、`count`、`operators`；干员字段为 `id`、`name`、`rarity`、`profession`、`enabled`、`portrait`、`portraitKind`、`sourceUrl`、`updatedAt`、`skills`。其中 `skills` 元素形如 `{ "index": 1, "name": "真银斩" }`；Base 未核验时该字段可以省略。
+三个 JSON 入口共用同一数据集形状：顶层包含 `schemaVersion`、`generatedAt`、`source`、`count`、`operators`；干员字段为 `id`、`name`、`rarity`、`profession`、`enabled`、`portrait`、`portraitKind`、`sourceUrl`、`updatedAt`、`skills`、`modules`。其中 `skills` 元素形如 `{ "index": 1, "name": "真银斩" }`，`modules` 元素形如 `{ "id": "R303:AFT-X", "index": 1, "name": "萨米的不灭心脏碎片", "code": "AFT-X", "sourceUrl": "https://prts.wiki/w/史尔特尔#模组" }`；对应字段未核验时可以省略，空数组表示已核验且确实没有。

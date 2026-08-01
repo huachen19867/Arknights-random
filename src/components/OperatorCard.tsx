@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react'
-import type { DrawResult, Operator, OperatorSkill } from '../types'
+import type { DrawResult, Operator, OperatorModule, OperatorSkill } from '../types'
 import { Stars } from './Stars'
 
 interface OperatorCardProps {
@@ -10,6 +10,8 @@ interface OperatorCardProps {
   portraitScale?: number
   skill?: OperatorSkill
   skillState?: DrawResult['skillState']
+  operatorModule?: OperatorModule
+  moduleState?: DrawResult['moduleState']
 }
 
 type RevealStyle = CSSProperties & { '--reveal-index'?: number }
@@ -22,6 +24,8 @@ export function OperatorCard({
   portraitScale = 1,
   skill,
   skillState,
+  operatorModule,
+  moduleState,
 }: OperatorCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
   const hasPortrait = Boolean(operator?.portrait) && !imageFailed
@@ -40,7 +44,7 @@ export function OperatorCard({
     <article
       className={`operator-slot operator-card${revealing ? ' operator-card--revealing' : ''}${compact ? ' operator-card--compact' : ''}`}
       style={{ '--reveal-index': slot - 1 } as RevealStyle}
-      aria-label={`${operator.name}，${operator.rarity} 星，${operator.profession}${skill ? `，技能 ${skill.index}，${skill.name}` : skillState === 'unavailable' ? '，无技能' : skillState === 'missing' ? '，技能未收录' : ''}`}
+      aria-label={`${operator.name}，${operator.rarity} 星，${operator.profession}${skill ? `，技能 ${skill.index}，${skill.name}` : skillState === 'unavailable' ? '，无技能' : skillState === 'missing' ? '，技能未收录' : ''}${operatorModule ? `，模组 ${operatorModule.name}` : moduleState === 'unavailable' ? '，无模组' : moduleState === 'missing' ? '，模组未收录' : ''}`}
     >
       <div className="operator-card__grid" aria-hidden="true"></div>
       <span className="operator-card__class">{operator.profession}</span>
@@ -67,6 +71,17 @@ export function OperatorCard({
       {!skill && skillState && (
         <div className="operator-card__skill operator-card__skill--muted">
           <strong>{skillState === 'unavailable' ? '无技能' : '技能未收录'}</strong>
+        </div>
+      )}
+      {operatorModule && (
+        <div className="operator-card__module" title={`模组 ${operatorModule.name}`}>
+          <span>模组</span>
+          <strong>{operatorModule.name}</strong>
+        </div>
+      )}
+      {!operatorModule && moduleState && (
+        <div className="operator-card__module operator-card__module--muted">
+          <strong>{moduleState === 'unavailable' ? '无模组' : '模组未收录'}</strong>
         </div>
       )}
       <div className="operator-card__footer">

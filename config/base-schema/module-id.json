@@ -1,0 +1,5 @@
+{
+  "type": "text",
+  "name": "模组ID",
+  "description": "稳定主键，格式 干员稳定ID:分支类型码，如 R001:医疗:INC-X"
+}

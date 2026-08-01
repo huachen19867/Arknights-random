@@ -23,6 +23,7 @@ function settings(overrides: Partial<DrawSettings> = {}): DrawSettings {
     count: 12,
     bannedIds: [],
     randomSkill: false,
+    randomModule: false,
     ...overrides,
   }
 }
@@ -46,6 +47,21 @@ describe('normalizeOperatorPayload', () => {
     expect(normalized[0].skills).toEqual([{ index: 1, name: '一技能' }])
     expect(normalized[1].skills).toEqual([])
     expect(Object.hasOwn(normalized[2], 'skills')).toBe(false)
+  })
+
+  it('透传 modules 并保留空数组与缺失两种语义', () => {
+    const payload = [
+      {
+        ...operators[0],
+        modules: [{ id: 'a:AFT-X', index: 1, name: '模组一', code: 'AFT-X' }, { id: 'bad', index: 0, name: '' }],
+      },
+      { ...operators[1], modules: [] },
+      operators[2],
+    ]
+    const normalized = normalizeOperatorPayload(payload)
+    expect(normalized[0].modules).toEqual([{ id: 'a:AFT-X', index: 1, name: '模组一', code: 'AFT-X' }])
+    expect(normalized[1].modules).toEqual([])
+    expect(Object.hasOwn(normalized[2], 'modules')).toBe(false)
   })
 })
 
@@ -105,7 +121,7 @@ describe('secure draw', () => {
       },
     } as unknown as Crypto
 
-    const results = drawOperatorResults(skillCandidates, 3, true, cryptoApi)
+    const results = drawOperatorResults(skillCandidates, 3, true, false, cryptoApi)
     expect(results.map((result) => result.skillState)).toEqual(['unavailable', 'missing', 'selected'])
     expect(results[2].skill).toEqual({ index: 2, name: '二技能' })
     expect(results[2].skill?.name).toBe('二技能')
@@ -114,5 +130,37 @@ describe('secure draw', () => {
   it('关闭随机技能时不生成技能结果', () => {
     const results = drawOperatorResults(operators.slice(0, 2), 2, false)
     expect(results.every((result) => result.skill === undefined && result.skillState === undefined)).toBe(true)
+  })
+
+  it('开启随机模组时在抽取阶段写入稳定结果，并区分无模组与未收录', () => {
+    const moduleCandidates: Operator[] = [
+      {
+        ...operators[0],
+        modules: [
+          { id: 'a:AFT-X', index: 1, name: '模组甲', code: 'AFT-X' },
+          { id: 'a:AFT-Y', index: 2, name: '模组乙', code: 'AFT-Y' },
+        ],
+      },
+      { ...operators[1], modules: [] },
+      operators[2],
+    ]
+    const values = [0, 0, 1]
+    let cursor = 0
+    const cryptoApi = {
+      getRandomValues(array: Uint32Array) {
+        array[0] = values[cursor++] ?? 0
+        return array
+      },
+    } as unknown as Crypto
+
+    const results = drawOperatorResults(moduleCandidates, 3, false, true, cryptoApi)
+    expect(results.map((result) => result.moduleState)).toEqual(['unavailable', 'missing', 'selected'])
+    expect(results[2].module).toEqual({ id: 'a:AFT-Y', index: 2, name: '模组乙', code: 'AFT-Y' })
+    expect(results[0].module).toBeUndefined()
+  })
+
+  it('关闭随机模组时不生成模组结果', () => {
+    const results = drawOperatorResults(operators.slice(0, 2), 2, false, false)
+    expect(results.every((result) => result.module === undefined && result.moduleState === undefined)).toBe(true)
   })
 })

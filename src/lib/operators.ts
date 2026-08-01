@@ -4,6 +4,7 @@ import {
   type DrawResult,
   type DrawSettings,
   type Operator,
+  type OperatorModule,
   type OperatorSkill,
 } from '../types'
 
@@ -11,6 +12,19 @@ export function isOperatorSkill(value: unknown): value is OperatorSkill {
   if (!value || typeof value !== 'object') return false
   const candidate = value as Partial<OperatorSkill>
   return (
+    Number.isInteger(candidate.index) &&
+    (candidate.index as number) > 0 &&
+    typeof candidate.name === 'string' &&
+    candidate.name.trim().length > 0
+  )
+}
+
+export function isOperatorModule(value: unknown): value is OperatorModule {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as Partial<OperatorModule>
+  return (
+    typeof candidate.id === 'string' &&
+    candidate.id.trim().length > 0 &&
     Number.isInteger(candidate.index) &&
     (candidate.index as number) > 0 &&
     typeof candidate.name === 'string' &&
@@ -45,11 +59,15 @@ export function normalizeOperatorPayload(payload: unknown): Operator[] {
     if (!isOperator(record) || unique.has(record.id)) continue
     const sourceSkills = Array.isArray(record.skills) ? record.skills : undefined
     const skills = sourceSkills?.filter(isOperatorSkill)
+    const sourceModules = Array.isArray(record.modules) ? record.modules : undefined
+    const modules = sourceModules?.filter(isOperatorModule)
     const normalizedRecord = { ...record }
     delete normalizedRecord.skills
+    delete normalizedRecord.modules
     unique.set(record.id, {
       ...normalizedRecord,
       ...(sourceSkills?.length === 0 || (skills && skills.length > 0) ? { skills } : {}),
+      ...(sourceModules?.length === 0 || (modules && modules.length > 0) ? { modules } : {}),
     })
   }
   return [...unique.values()]
@@ -114,16 +132,43 @@ export function pickOperatorSkill(
   return operator.skills[secureRandomInt(operator.skills.length, cryptoApi)]
 }
 
+export function pickOperatorModule(
+  operator: Operator,
+  cryptoApi: Crypto = globalThis.crypto,
+): OperatorModule | undefined {
+  if (!operator.modules?.length) return undefined
+  return operator.modules[secureRandomInt(operator.modules.length, cryptoApi)]
+}
+
 export function drawOperatorResults(
   candidates: Operator[],
   requestedCount: number,
   randomSkill: boolean,
+  randomModule = false,
   cryptoApi: Crypto = globalThis.crypto,
 ): DrawResult[] {
   return drawOperators(candidates, requestedCount, cryptoApi).map((operator) => {
-    if (!randomSkill) return { operator }
-    if (operator.skills === undefined) return { operator, skillState: 'missing' }
-    if (operator.skills.length === 0) return { operator, skillState: 'unavailable' }
-    return { operator, skill: pickOperatorSkill(operator, cryptoApi), skillState: 'selected' }
+    const result: DrawResult = { operator }
+    if (randomSkill) {
+      if (operator.skills === undefined) {
+        result.skillState = 'missing'
+      } else if (operator.skills.length === 0) {
+        result.skillState = 'unavailable'
+      } else {
+        result.skill = pickOperatorSkill(operator, cryptoApi)
+        result.skillState = 'selected'
+      }
+    }
+    if (randomModule) {
+      if (operator.modules === undefined) {
+        result.moduleState = 'missing'
+      } else if (operator.modules.length === 0) {
+        result.moduleState = 'unavailable'
+      } else {
+        result.module = pickOperatorModule(operator, cryptoApi)
+        result.moduleState = 'selected'
+      }
+    }
+    return result
   })
 }

@@ -121,6 +121,26 @@ export function extractHasMore(envelope, received, limit, requestedOffset = 0) {
   return received === limit;
 }
 
+export async function listAllTables({ baseToken, identity = 'user' }) {
+  const tables = [];
+  const limit = 100;
+  for (let offset = 0; ; offset += limit) {
+    const envelope = await runLark([
+      'base', '+table-list',
+      '--base-token', baseToken,
+      '--limit', String(limit),
+      '--offset', String(offset),
+      '--as', identity,
+      '--format', 'json',
+    ]);
+    const page = extractArray(envelope, ['items', 'tables']);
+    tables.push(...page);
+    if (!extractHasMore(envelope, page.length, limit, offset)) break;
+    if (page.length === 0) throw new Error('飞书表分页返回空页但 has_more=true');
+  }
+  return tables;
+}
+
 export async function listAllFields({ baseToken, tableId, identity = 'user' }) {
   const fields = [];
   const limit = 200;

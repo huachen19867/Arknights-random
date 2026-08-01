@@ -1,0 +1,5 @@
+{
+  "type": "datetime",
+  "name": "同步时间",
+  "description": "记录级业务内容变化时间"
+}

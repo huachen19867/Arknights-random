@@ -172,11 +172,41 @@ export function SettingsPage({ settings, onChange, onBack, candidateCount }: Set
             </div>
           </section>
 
+          <section className="setting-section setting-section--module" aria-labelledby="module-label">
+            <div className="setting-heading">
+              <div>
+                <span>05</span>
+                <h2 id="module-label">随机模组</h2>
+              </div>
+            </div>
+            <p className="skill-setting__description">开启后，为每名抽中干员独立随机一个已收录的模组。</p>
+            <div className="skill-setting__options" role="group" aria-label="是否随机模组">
+              <button
+                type="button"
+                className={settings.randomModule ? 'skill-setting__option skill-setting__option--selected' : 'skill-setting__option'}
+                aria-pressed={settings.randomModule}
+                onClick={() => update('randomModule', true)}
+              >
+                <strong>是</strong>
+                <small>RANDOM</small>
+              </button>
+              <button
+                type="button"
+                className={!settings.randomModule ? 'skill-setting__option skill-setting__option--selected' : 'skill-setting__option'}
+                aria-pressed={!settings.randomModule}
+                onClick={() => update('randomModule', false)}
+              >
+                <strong>否</strong>
+                <small>DEFAULT</small>
+              </button>
+            </div>
+          </section>
+
           <section className="setting-summary" aria-label="当前设置摘要">
             <span>ACTIVE RULE</span>
             <strong>
               {settings.rarities.length} 个星级 / {settings.professions.length} 个职业 / 抽取 {settings.count} 人 / 随机技能
-              {settings.randomSkill ? '开启' : '关闭'}
+              {settings.randomSkill ? '开启' : '关闭'} / 随机模组{settings.randomModule ? '开启' : '关闭'}
             </strong>
             <p>设置会自动保存在当前浏览器中。</p>
           </section>

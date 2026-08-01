@@ -1,0 +1,5 @@
+{
+  "type": "number",
+  "name": "展示顺序",
+  "description": "从 1 开始连续，页面展示顺序"
+}

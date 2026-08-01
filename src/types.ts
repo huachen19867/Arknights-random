@@ -19,6 +19,14 @@ export interface OperatorSkill {
   name: string
 }
 
+export interface OperatorModule {
+  id: string
+  index: number
+  name: string
+  code?: string
+  sourceUrl?: string
+}
+
 export interface Operator {
   id: string
   name: string
@@ -29,12 +37,15 @@ export interface Operator {
   sourceUrl?: string
   updatedAt?: string
   skills?: OperatorSkill[]
+  modules?: OperatorModule[]
 }
 
 export interface DrawResult {
   operator: Operator
   skill?: OperatorSkill
   skillState?: 'selected' | 'unavailable' | 'missing'
+  module?: OperatorModule
+  moduleState?: 'selected' | 'unavailable' | 'missing'
 }
 
 export interface DrawSettings {
@@ -43,6 +54,7 @@ export interface DrawSettings {
   count: number
   bannedIds: string[]
   randomSkill: boolean
+  randomModule: boolean
 }
 
 export type AppPage = 'draw' | 'settings' | 'ban' | 'portrait-test'

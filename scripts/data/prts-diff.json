@@ -1,20 +1,37 @@
 {
-  "generatedAt": "2026-08-01T12:56:57.312Z",
+  "generatedAt": "2026-08-01T14:04:30.176Z",
   "output": "scripts/data/prts-operators.json",
   "options": {
     "allowRemovals": false,
     "maximumAdditions": 50,
     "maximumChanges": 50,
-    "recheckPortraits": true,
-    "recheckSkills": true
+    "recheckPortraits": false,
+    "recheckSkills": false,
+    "recheckModules": false,
+    "migratePortraitsElite0": false
   },
   "portraitResolution": {
-    "reusedElite2": 0,
-    "checked": 423
+    "reused": 419,
+    "checked": 4
   },
   "skillResolution": {
-    "reused": 0,
-    "fetched": 423
+    "reused": 423,
+    "fetched": 0
+  },
+  "moduleResolution": {
+    "reused": 423,
+    "fetched": 0
+  },
+  "migratedPortraitCount": 0,
+  "portraitExceptions": {
+    "阿米娅(医疗)": {
+      "fallback": "elite2",
+      "reason": "PRTS 无精零立绘文件（立绘_阿米娅(医疗)_1.png 不存在），仅存在精二立绘"
+    },
+    "阿米娅(近卫)": {
+      "fallback": "elite2",
+      "reason": "PRTS 无精零立绘文件（立绘_阿米娅(近卫)_1.png 不存在），仅存在精二立绘"
+    }
   },
   "validation": {
     "ok": true,
@@ -40,14 +57,21 @@
       "特种": 48
     },
     "portraitCounts": {
-      "elite1": 33,
-      "elite2": 390
+      "elite0": 421,
+      "elite2": 2
     },
     "skillCounts": {
       "0": 16,
       "1": 17,
       "2": 255,
       "3": 135,
+      "unknown": 0
+    },
+    "moduleCounts": {
+      "0": 43,
+      "1": 285,
+      "2": 80,
+      "3": 15,
       "unknown": 0
     }
   },

@@ -52,6 +52,8 @@ export function DrawPage({
                 operator={results[index]?.operator}
                 skill={results[index]?.skill}
                 skillState={results[index]?.skillState}
+                operatorModule={results[index]?.module}
+                moduleState={results[index]?.moduleState}
                 revealing={drawing}
               />
             ))}

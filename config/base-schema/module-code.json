@@ -1,0 +1,5 @@
+{
+  "type": "text",
+  "name": "分支类型码",
+  "description": "PRTS 页面类型码，如 AFT-X、BLA-Δ"
+}

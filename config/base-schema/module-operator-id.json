@@ -1,0 +1,5 @@
+{
+  "type": "text",
+  "name": "干员ID",
+  "description": "普通文本外键，必须存在于主表干员ID"
+}

@@ -2,8 +2,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   BASE_FIELDS,
+  BASE_MODULE_VERIFIED_FIELD,
   BASE_SKILL_FIELDS,
   BASE_SKILL_VERIFIED_FIELD,
+  MODULE_FIELDS,
+  MODULE_TABLE_NAME,
   chunk,
   parseArgs,
   readDataset,
@@ -12,11 +15,13 @@ import {
   unwrapUrlCellValue,
   validateDataset,
   verifyBaseFieldSchema,
+  verifyModuleFieldSchema,
   writeJsonAtomic,
 } from './lib/operators.mjs';
 import {
   listAllFields,
   listAllRecords,
+  listAllTables,
   recordFields,
   recordId,
   runWriteWithRetry,
@@ -52,6 +57,7 @@ function operatorFields(operator, generatedAt) {
     fields[field] = operator.skills.find((skill) => skill.index === index)?.name ?? null;
   }
   fields[BASE_SKILL_VERIFIED_FIELD] = true;
+  fields[BASE_MODULE_VERIFIED_FIELD] = true;
   return fields;
 }
 
@@ -67,6 +73,7 @@ function diffExisting(record, incoming) {
     '名称', '星级', '职业', '立绘URL', '来源URL', '同步时间',
     ...BASE_SKILL_FIELDS,
     BASE_SKILL_VERIFIED_FIELD,
+    BASE_MODULE_VERIFIED_FIELD,
   ];
   const changes = [];
   for (const field of comparedFields) {
@@ -79,11 +86,90 @@ function diffExisting(record, incoming) {
   return changes;
 }
 
+async function findModuleTableId(baseToken, identity) {
+  const tables = await listAllTables({ baseToken, identity });
+  const match = tables.find((table) => (table.name ?? table.table_name) === MODULE_TABLE_NAME);
+  return match?.table_id ?? match?.id;
+}
+
+function buildModuleRows(operator, generatedAt) {
+  return (operator.modules ?? []).map((module) => ({
+    '模组ID': module.id,
+    '干员ID': operator.id,
+    '模组名称': module.name,
+    '分支类型码': module.code ?? '',
+    '展示顺序': module.index,
+    '启用': true,
+    '来源URL': module.sourceUrl ?? '',
+    '同步时间': toLarkDateTime(operator.updatedAt ?? generatedAt),
+  }));
+}
+
+function comparableModuleValue(record, field) {
+  const fields = recordFields(record);
+  if (field === '来源URL') return unwrapUrlCellValue(fields[field]) ?? '';
+  const value = unwrapCellValue(fields[field]);
+  if (field === '展示顺序') return value === undefined || value === null || value === '' ? undefined : Number(value);
+  if (field === '启用') return value === true;
+  return value === undefined || value === null ? '' : String(value).trim();
+}
+
+function computeModuleDiff({ operators, moduleRecords }) {
+  const creates = [];
+  const updates = [];
+  const differences = [];
+  const removals = [];
+  const existingByModuleId = new Map();
+  for (const record of moduleRecords) {
+    const moduleId = String(unwrapCellValue(recordFields(record)['模组ID']) ?? '').trim();
+    if (!moduleId) continue;
+    if (existingByModuleId.has(moduleId)) throw new Error(`模组子表模组ID 重复: ${moduleId}`);
+    existingByModuleId.set(moduleId, record);
+  }
+  const expectedByOperator = new Map();
+  for (const operator of operators) {
+    expectedByOperator.set(operator.id, buildModuleRows(operator, new Date().toISOString()));
+  }
+  const expectedRows = [...expectedByOperator.values()].flat();
+  const expectedIds = new Set(expectedRows.map((row) => row['模组ID']));
+  for (const row of expectedRows) {
+    const existing = existingByModuleId.get(row['模组ID']);
+    if (!existing) {
+      creates.push(row);
+      continue;
+    }
+    const changedFields = MODULE_FIELDS.filter((field) => {
+      const baseValue = comparableModuleValue(existing, field);
+      const prtsValue = row[field];
+      return String(baseValue ?? '') !== String(prtsValue ?? '');
+    });
+    if (changedFields.length > 0) {
+      differences.push({
+        moduleId: row['模组ID'],
+        operatorId: row['干员ID'],
+        recordId: recordId(existing),
+        fields: changedFields,
+      });
+      updates.push([recordId(existing), row]);
+    }
+  }
+  for (const [moduleId, record] of existingByModuleId) {
+    if (!expectedIds.has(moduleId)) {
+      removals.push({
+        moduleId,
+        operatorId: String(unwrapCellValue(recordFields(record)['干员ID']) ?? '').trim(),
+        recordId: recordId(record),
+      });
+    }
+  }
+  return { creates, updates, differences, removals };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     console.log('Usage: node scripts/base-upsert.mjs [--input <json>] [--write] [--update-existing] [--update-portrait-url] [--update-skills]');
-    console.log('       [--batch-size 100] [--batch-delay 1200]');
+    console.log('       [--update-modules] [--update-module-existing] [--batch-size 100] [--batch-delay 1200]');
     console.log('Env: LARK_BASE_TOKEN, LARK_TABLE_ID, optional LARK_AS=user');
     return;
   }
@@ -119,6 +205,38 @@ async function main() {
     existingByOperatorId.set(operatorId, record);
   }
 
+  const moduleTableId = args['update-modules'] ? await findModuleTableId(baseToken, identity) : undefined;
+  let moduleRecords = [];
+  let moduleVerifyNeeded = 0;
+  const moduleCreateAll = [];
+  const moduleUpdateAll = [];
+  const moduleDiffAll = [];
+  const moduleRemovalAll = [];
+  if (args['update-modules'] && !moduleTableId) {
+    throw new Error('--update-modules 需要模组子表“干员模组”，请先初始化 Base 或去掉该参数');
+  }
+  if (args['update-modules'] && moduleTableId) {
+    console.log('[2.5/3] 读取模组子表');
+    verifyModuleFieldSchema(await listAllFields({ baseToken, tableId: moduleTableId, identity }));
+    moduleRecords = await listAllRecords({
+      baseToken,
+      tableId: moduleTableId,
+      fields: MODULE_FIELDS,
+      identity,
+    });
+    const moduleDiff = computeModuleDiff({ operators: dataset.operators, moduleRecords });
+    moduleCreateAll.push(...moduleDiff.creates);
+    moduleUpdateAll.push(...moduleDiff.updates);
+    moduleDiffAll.push(...moduleDiff.differences);
+    moduleRemovalAll.push(...moduleDiff.removals);
+    for (const operator of dataset.operators) {
+      const existingRecord = existingByOperatorId.get(operator.id);
+      if (!existingRecord) continue;
+      const verified = unwrapCellValue(recordFields(existingRecord)[BASE_MODULE_VERIFIED_FIELD]) === true;
+      if (!verified) moduleVerifyNeeded += 1;
+    }
+  }
+
   const creates = [];
   const updates = [];
   const differences = [];
@@ -137,18 +255,23 @@ async function main() {
       recordId: recordId(existingRecord),
       changes,
     });
-    if (args['update-existing'] || args['update-skills']) {
+    if (args['update-existing'] || args['update-skills'] || args['update-modules']) {
       const skillGroupFields = [...BASE_SKILL_FIELDS, BASE_SKILL_VERIFIED_FIELD];
+      const moduleGroupFields = [BASE_MODULE_VERIFIED_FIELD];
       const updateFields = {};
       if (args['update-existing']) {
         for (const { field, prts } of changes) {
-          if (!skillGroupFields.includes(field) && field !== '启用' && (field !== '立绘URL' || args['update-portrait-url'])) {
+          if (!skillGroupFields.includes(field) && !moduleGroupFields.includes(field) && field !== '启用' && (field !== '立绘URL' || args['update-portrait-url'])) {
             updateFields[field] = prts;
           }
         }
       }
       if (args['update-skills'] && changes.some(({ field }) => skillGroupFields.includes(field))) {
         for (const field of skillGroupFields) updateFields[field] = fields[field];
+        updateFields['同步时间'] = fields['同步时间'];
+      }
+      if (args['update-modules'] && changes.some(({ field }) => moduleGroupFields.includes(field))) {
+        updateFields[BASE_MODULE_VERIFIED_FIELD] = true;
         updateFields['同步时间'] = fields['同步时间'];
       }
       if (Object.keys(updateFields).length > 0) {
@@ -168,10 +291,29 @@ async function main() {
     updateExisting: Boolean(args['update-existing']),
     updatePortraitUrl: Boolean(args['update-portrait-url']),
     updateSkills: Boolean(args['update-skills']),
+    updateModules: Boolean(args['update-modules']),
+    updateModuleExisting: Boolean(args['update-module-existing']),
     differences,
+    module: args['update-modules']
+      ? {
+          tableName: MODULE_TABLE_NAME,
+          verifyNeeded: moduleVerifyNeeded,
+          createCount: moduleCreateAll.length,
+          updateCount: moduleUpdateAll.length,
+          differenceCount: moduleDiffAll.length,
+          removalCount: moduleRemovalAll.length,
+          creates: moduleCreateAll,
+          updates: args['update-module-existing'] ? moduleUpdateAll : [],
+          differences: moduleDiffAll,
+          removals: moduleRemovalAll,
+        }
+      : undefined,
   };
   await writeJsonAtomic(diffOutput, diffReport);
   console.log(`    计划新建 ${creates.length} 条，显式更新 ${updates.length} 条，已有记录差异 ${differences.length} 条`);
+  if (args['update-modules']) {
+    console.log(`    模组：需核验 ${moduleVerifyNeeded} 条，新建 ${moduleCreateAll.length} 行，差异 ${moduleDiffAll.length} 行，移除 ${moduleRemovalAll.length} 行`);
+  }
   console.log(`    差异报告: ${diffOutput}`);
   if (!args.write) {
     console.log('[3/3] 预览完成；未写入。确认后加 --write 执行。');
@@ -203,6 +345,39 @@ async function main() {
       '--format', 'json',
     ], { update_records: Object.fromEntries(batch) });
     if (batchDelay > 0) await wait(batchDelay);
+  }
+  if (args['update-modules'] && moduleTableId) {
+    let moduleBatchIndex = 0;
+    for (const batch of chunk(moduleCreateAll, batchSize)) {
+      moduleBatchIndex += 1;
+      console.log(`    串行新建模组批次 ${moduleBatchIndex}，${batch.length} 行`);
+      await runWriteWithRetry([
+        'base', '+record-batch-create',
+        '--base-token', baseToken,
+        '--table-id', moduleTableId,
+        '--as', identity,
+        '--format', 'json',
+      ], { create_records: batch });
+      if (batchDelay > 0) await wait(batchDelay);
+    }
+    if (args['update-module-existing']) {
+      moduleBatchIndex = 0;
+      for (const batch of chunk(moduleUpdateAll, batchSize)) {
+        moduleBatchIndex += 1;
+        console.log(`    串行更新模组批次 ${moduleBatchIndex}，${batch.length} 行`);
+        await runWriteWithRetry([
+          'base', '+record-batch-update',
+          '--base-token', baseToken,
+          '--table-id', moduleTableId,
+          '--as', identity,
+          '--format', 'json',
+        ], { update_records: Object.fromEntries(batch) });
+        if (batchDelay > 0) await wait(batchDelay);
+      }
+    }
+    if (moduleRemovalAll.length > 0) {
+      console.log(`    [注意] ${moduleRemovalAll.length} 个模组疑似被官方移除，未物理删除，请人工判断后停用或确认删除`);
+    }
   }
   console.log('[3/3] Base upsert 完成；未读取或写入任何附件字段');
 }

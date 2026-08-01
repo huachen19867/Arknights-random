@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-01T12:57:25.960Z",
+  "generatedAt": "2026-08-01T14:16:53.641Z",
   "input": "scripts/data/prts-operators.json",
   "existingCount": 423,
   "missingCount": 0,
@@ -7,5 +7,19 @@
   "updateExisting": false,
   "updatePortraitUrl": false,
   "updateSkills": false,
-  "differences": []
+  "updateModules": true,
+  "updateModuleExisting": false,
+  "differences": [],
+  "module": {
+    "tableName": "干员模组",
+    "verifyNeeded": 0,
+    "createCount": 0,
+    "updateCount": 0,
+    "differenceCount": 0,
+    "removalCount": 0,
+    "creates": [],
+    "updates": [],
+    "differences": [],
+    "removals": []
+  }
 }
