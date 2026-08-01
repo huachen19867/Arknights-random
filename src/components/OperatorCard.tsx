@@ -21,7 +21,7 @@ export function OperatorCard({
   slot,
   revealing = false,
   compact = false,
-  portraitScale = 1,
+  portraitScale = 1.2,
   skill,
   skillState,
   operatorModule,
