@@ -1,0 +1,91 @@
+name: Check PRTS data updates
+
+on:
+  schedule:
+    # 每周一 08:00 UTC（北京时间 16:00）只读检查官方数据是否有变化
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync PRTS data
+        run: npm run data:prts
+
+      - name: Check PRTS samples
+        run: npm run data:prts:samples
+
+      - name: Validate committed data
+        run: npm run data:test
+
+      - name: Summarize diff
+        if: always()
+        shell: bash
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+          const lines = ['## PRTS 数据更新检查', `- 检查时间：${new Date().toISOString()}`];
+          const knownProfessions = ['先锋', '近卫', '重装', '狙击', '术师', '医疗', '辅助', '特种'];
+          let broken = false;
+          let diff;
+          try {
+            diff = JSON.parse(fs.readFileSync('scripts/data/prts-diff.json', 'utf8'));
+          } catch {
+            lines.push('- 未找到差异报告：PRTS 同步未完成或提前失败。');
+            broken = true;
+          }
+          if (diff) {
+            const additions = diff.additions ?? [];
+            const removals = diff.removals ?? [];
+            const changes = diff.changes ?? [];
+            const transitionErrors = diff.transitionErrors ?? [];
+            const validation = diff.validation ?? {};
+            const unknownProfessions = Object.keys(validation.professionCounts ?? {}).filter((key) => !knownProfessions.includes(key));
+            const realUpdates = (diff.additionCount ?? 0) + (diff.removalCount ?? 0) + (diff.changeCount ?? 0);
+            broken = validation.ok === false || transitionErrors.length > 0 || unknownProfessions.length > 0;
+            lines.push(`- 旧总数 ${diff.previousCount} → 新总数 ${diff.nextCount}；新增 ${diff.additionCount ?? 0}、移除 ${diff.removalCount ?? 0}、变化 ${diff.changeCount ?? 0}`);
+            for (const item of additions) lines.push(`- 新增干员：${item.id} ${item.name}`);
+            for (const item of removals) lines.push(`- 疑似移除：${item.id} ${item.name}（removal guard 生效，不自动删除）`);
+            for (const item of changes) lines.push(`- 变化：${item.id} ${item.name}（${item.fields.map((f) => f.field).join('、')}）`);
+            if (validation.ok === false) lines.push(`- 数据校验失败：${(validation.errors ?? []).join('；')}`);
+            for (const error of transitionErrors) lines.push(`- 迁移保护：${error}`);
+            for (const profession of unknownProfessions) lines.push(`- 出现八枚举之外的职业：${profession}`);
+            if (realUpdates > 0) {
+              lines.push('- 结论：发现真实更新，请在本机人工确认后再执行 Base 写入与导出。');
+            } else if (broken) {
+              lines.push('- 结论：存在校验或护栏问题，禁止自动写入。');
+            } else {
+              lines.push('- 结论：与上次快照一致，无需处理。');
+            }
+            if (realUpdates > 0 || broken) {
+              lines.push('- 本工作流只读，不会写 Base、不会提交生成物；后续动作请在本机完成。');
+            }
+          }
+          fs.appendFileSync(summaryPath, lines.join('\n') + '\n');
+          if (broken || (diff && (diff.additionCount ?? 0) + (diff.removalCount ?? 0) + (diff.changeCount ?? 0) > 0)) process.exit(1);
+          EOF
+
+      - name: Upload diff artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prts-diff
+          path: scripts/data/prts-diff.json
+          if-no-files-found: warn

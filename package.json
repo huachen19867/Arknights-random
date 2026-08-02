@@ -16,6 +16,8 @@
     "data:prts": "node scripts/sync-prts.mjs",
     "data:prts:samples": "node scripts/check-prts-samples.mjs",
     "data:prts:recheck": "node scripts/sync-prts.mjs --recheck-portraits --recheck-skills --recheck-modules",
+    "data:update:preview": "node scripts/update-operators.mjs",
+    "data:update:preview:no-base": "node scripts/update-operators.mjs --skip-base",
     "data:base:preview": "node scripts/base-upsert.mjs",
     "data:base:skills:preview": "node scripts/base-upsert.mjs --update-skills",
     "data:base:skills:write": "node scripts/base-upsert.mjs --update-skills --write",
