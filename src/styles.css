@@ -919,7 +919,8 @@ select:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px 16px;
   margin-bottom: 20px;
 }
 
@@ -1754,10 +1755,85 @@ select:focus-visible {
   letter-spacing: 0.06em;
 }
 
-.plan-switch-actions {
+/* 设置页职业范围：启用/关闭自选职业互斥开关 */
+.plan-mode-switch {
+  display: inline-flex;
+  border: 1px solid rgba(22, 28, 30, 0.4);
+  background: rgba(22, 28, 30, 0.05);
+}
+
+.plan-mode-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.plan-mode-switch button::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgba(23, 27, 29, 0.45);
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.plan-mode-switch button:hover:not(:disabled) {
+  background: rgba(22, 28, 30, 0.09);
+  color: var(--ink);
+}
+
+.plan-mode-switch button[aria-pressed='true'] {
+  background: var(--ink);
+  color: #fff;
+}
+
+.plan-mode-switch button[aria-pressed='true']::before {
+  background: var(--cyan);
+  box-shadow: 0 0 0 1px var(--cyan);
+}
+
+/* 普通范围模式的职业工具行（全部选择/取消全选） */
+.profession-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.profession-toolbar button {
+  padding: 7px 12px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  font-size: 12px;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.profession-toolbar button:hover {
+  background: var(--ink);
+  color: #fff;
+}
+
+/* 自选模式摘要里的引导按钮 */
+.plan-goto-button {
+  align-self: flex-start;
+  padding: 7px 12px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  font-size: 12px;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.plan-goto-button:hover {
+  background: var(--ink);
+  color: #fff;
 }
 
 .plan-summary-block {

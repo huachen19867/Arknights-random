@@ -174,7 +174,6 @@ export function App() {
           onChange={setSettings}
           onBack={() => navigate('draw')}
           onGoToProfessionPlan={() => navigate('profession-plan')}
-          onSwitchToRange={() => setSettings({ ...settings, drawMode: 'range' })}
           candidateCount={candidates.length}
         />
       )}

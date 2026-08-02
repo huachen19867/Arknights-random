@@ -9,7 +9,6 @@ interface SettingsPageProps {
   onChange: (settings: DrawSettings) => void
   onBack: () => void
   onGoToProfessionPlan: () => void
-  onSwitchToRange: () => void
   candidateCount: number
 }
 
@@ -22,7 +21,6 @@ export function SettingsPage({
   onChange,
   onBack,
   onGoToProfessionPlan,
-  onSwitchToRange,
   candidateCount,
 }: SettingsPageProps) {
   const effective = getEffectiveDrawConfig(settings)
@@ -98,28 +96,22 @@ export function SettingsPage({
                 <h2 id="profession-label">职业范围</h2>
                 {planActive && <em className="mode-tag">自选职业模式</em>}
               </div>
-              {planActive ? (
-                <div className="plan-switch-actions">
-                  <button type="button" onClick={onGoToProfessionPlan}>
-                    前往自选职业修改
-                  </button>
-                  <button type="button" onClick={onSwitchToRange}>
-                    切换为范围抽取
-                  </button>
-                </div>
-              ) : (
+              <div className="plan-mode-switch" role="group" aria-label="自选职业开关">
                 <button
                   type="button"
-                  onClick={() =>
-                    update(
-                      'professions',
-                      settings.professions.length === PROFESSIONS.length ? [] : [...PROFESSIONS],
-                    )
-                  }
+                  aria-pressed={planActive}
+                  onClick={() => onChange({ ...settings, drawMode: 'profession-plan' })}
                 >
-                  {settings.professions.length === PROFESSIONS.length ? '取消全选' : '全部选择'}
+                  启用自选职业
                 </button>
-              )}
+                <button
+                  type="button"
+                  aria-pressed={!planActive}
+                  onClick={() => onChange({ ...settings, drawMode: 'range' })}
+                >
+                  关闭自选职业
+                </button>
+              </div>
             </div>
             {planActive ? (
               <div className="plan-summary-block">
@@ -133,15 +125,32 @@ export function SettingsPage({
                     ))}
                   </div>
                 ) : (
-                  <p className="plan-summary-empty">尚未添加职业名额。</p>
+                  <p className="plan-summary-empty">尚未添加职业名额，点击下方按钮前往自选职业页添加。</p>
                 )}
                 <p className="plan-summary-note">
                   自选职业模式按名额精确配队：每个名额只抽取对应职业。抽取人数固定为名额总数
-                  {effective.count}，普通职业范围与人数设置已保留，切换回范围抽取后原样恢复。
+                  {effective.count}，普通职业范围与人数设置已保留，关闭自选职业后原样恢复。
                 </p>
+                <button type="button" className="plan-goto-button" onClick={onGoToProfessionPlan}>
+                  前往自选职业修改
+                </button>
               </div>
             ) : (
-              <div className="profession-options">
+              <div className="profession-block">
+                <div className="profession-toolbar">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      update(
+                        'professions',
+                        settings.professions.length === PROFESSIONS.length ? [] : [...PROFESSIONS],
+                      )
+                    }
+                  >
+                    {settings.professions.length === PROFESSIONS.length ? '取消全选' : '全部选择'}
+                  </button>
+                </div>
+                <div className="profession-options">
                 {PROFESSIONS.map((profession) => {
                   const selected = settings.professions.includes(profession)
                   return (
@@ -165,6 +174,7 @@ export function SettingsPage({
                     </button>
                   )
                 })}
+                </div>
               </div>
             )}
           </section>
