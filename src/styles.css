@@ -1234,7 +1234,7 @@ select:focus-visible {
 
 .ban-toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 160px 160px auto;
+  grid-template-columns: minmax(180px, 1fr) 160px 160px auto;
   align-items: end;
   gap: 10px;
   padding: 16px;
@@ -1295,6 +1295,7 @@ select:focus-visible {
   min-height: 38px;
   border-color: rgba(255, 255, 255, 0.66);
   color: #fff;
+  white-space: nowrap;
 }
 
 .ban-actions button:disabled {
@@ -1305,6 +1306,16 @@ select:focus-visible {
 .ban-actions .danger-button {
   border-color: var(--orange);
   background: var(--orange);
+}
+
+.ban-actions .ban-select-button {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.ban-actions .ban-select-button:hover:not(:disabled) {
+  background: var(--cyan);
+  color: var(--ink);
 }
 
 .ban-results-meta {
