@@ -1717,30 +1717,16 @@ select:focus-visible {
   margin-top: 18px;
 }
 
-.plan-actions button {
+/* 自选职业页底部的模式开关（与设置页同款，尺寸放大） */
+.plan-mode-switch--large button {
   padding: 12px 22px;
-  border: 1px solid var(--ink);
-  background: transparent;
   font-size: 14px;
   font-weight: 700;
 }
 
-.plan-actions button:hover:not(:disabled) {
-  background: var(--ink);
-  color: #fff;
-}
-
-.plan-actions__use {
-  background: var(--orange);
-  border-color: var(--orange) !important;
-  color: #fff;
-  clip-path: polygon(0 0, 100% 0, 100% 78%, 92% 100%, 0 100%);
-}
-
-.plan-actions__use:hover:not(:disabled) {
-  background: var(--orange) !important;
-  filter: brightness(1.08);
-  color: #fff !important;
+.plan-mode-switch--large button::before {
+  width: 8px;
+  height: 8px;
 }
 
 /* ===== 设置页自选职业模式联动 ===== */
@@ -2087,7 +2073,11 @@ select:focus-visible {
     flex: 1;
   }
 
-  .plan-actions button {
+  .plan-actions .plan-mode-switch {
+    width: 100%;
+  }
+
+  .plan-actions .plan-mode-switch button {
     flex: 1;
   }
 

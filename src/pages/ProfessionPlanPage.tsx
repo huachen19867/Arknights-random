@@ -147,12 +147,22 @@ export function ProfessionPlanPage({ settings, onChange, onBack, onUsePlan }: Pr
         </div>
 
         <div className="plan-actions">
-          <button type="button" className="plan-actions__use" onClick={usePlan}>
-            使用此方案
-          </button>
-          <button type="button" className="plan-actions__range" onClick={switchToRange}>
-            切换为范围抽取
-          </button>
+          <div className="plan-mode-switch plan-mode-switch--large" role="group" aria-label="自选职业开关">
+            <button
+              type="button"
+              aria-pressed={settings.drawMode === 'profession-plan'}
+              onClick={usePlan}
+            >
+              启用自选职业
+            </button>
+            <button
+              type="button"
+              aria-pressed={settings.drawMode !== 'profession-plan'}
+              onClick={switchToRange}
+            >
+              关闭自选职业
+            </button>
+          </div>
         </div>
       </section>
     </main>
