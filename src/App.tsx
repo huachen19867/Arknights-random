@@ -161,11 +161,29 @@ export function App() {
 
   return (
     <div className="app-shell">
+      <section
+        className="orientation-gate"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="orientation-gate-title"
+        aria-describedby="orientation-gate-description"
+      >
+        <div className="orientation-gate__signal" aria-hidden="true">
+          <span className="orientation-gate__phone"></span>
+          <span className="orientation-gate__arc"></span>
+        </div>
+        <span className="orientation-gate__eyebrow">DISPLAY ORIENTATION / 90°</span>
+        <h1 id="orientation-gate-title">请旋转手机</h1>
+        <p id="orientation-gate-description">横屏后将自动进入罗德岛随机编队终端</p>
+        <div className="orientation-gate__status">
+          <i></i>
+          <span>等待设备横置</span>
+        </div>
+      </section>
       <AppHeader
         page={page}
         onNavigate={navigate}
         bannedCount={settings.bannedIds.length}
-
       />
       {page === 'settings' && (
         <SettingsPage

@@ -105,6 +105,10 @@ select:focus-visible {
   transform: rotate(45deg);
 }
 
+.orientation-gate {
+  display: none;
+}
+
 .app-header {
   position: relative;
   z-index: 10;
@@ -2087,6 +2091,331 @@ select:focus-visible {
 
   .portrait-sample__pair {
     grid-template-columns: repeat(2, minmax(110px, 1fr));
+  }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .app-shell {
+    min-height: 100svh;
+    overflow: hidden;
+  }
+
+  .app-shell > :not(.orientation-gate) {
+    visibility: hidden;
+  }
+
+  .orientation-gate {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: flex;
+    min-height: 100svh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 36px 28px;
+    background:
+      linear-gradient(118deg, transparent 0 12%, rgba(255, 255, 255, 0.9) 12.2% 16%, transparent 16.2%),
+      repeating-linear-gradient(0deg, rgba(18, 28, 32, 0.025) 0 1px, transparent 1px 5px),
+      #e8ebea;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .orientation-gate::before,
+  .orientation-gate::after {
+    position: absolute;
+    content: "";
+    pointer-events: none;
+  }
+
+  .orientation-gate::before {
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--cyan) 0 62%, var(--orange) 62%);
+  }
+
+  .orientation-gate::after {
+    right: -34vw;
+    bottom: -34vw;
+    width: 76vw;
+    aspect-ratio: 1;
+    border: 22px solid rgba(23, 27, 29, 0.045);
+    transform: rotate(45deg);
+  }
+
+  .orientation-gate__signal {
+    position: relative;
+    width: 150px;
+    height: 132px;
+    margin-bottom: 24px;
+  }
+
+  .orientation-gate__phone {
+    position: absolute;
+    top: 22px;
+    left: 47px;
+    width: 58px;
+    height: 96px;
+    border: 7px solid var(--ink);
+    background: rgba(255, 255, 255, 0.62);
+    box-shadow: inset 0 -9px 0 var(--cyan), 8px 8px 0 rgba(23, 27, 29, 0.1);
+    transform: rotate(90deg);
+  }
+
+  .orientation-gate__phone::after {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    width: 5px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--ink);
+    content: "";
+    transform: translateY(-50%);
+  }
+
+  .orientation-gate__arc {
+    position: absolute;
+    top: 0;
+    left: 21px;
+    width: 106px;
+    height: 78px;
+    border-top: 4px solid var(--orange);
+    border-right: 4px solid var(--orange);
+    border-radius: 0 80px 0 0;
+    transform: rotate(-18deg);
+  }
+
+  .orientation-gate__arc::after {
+    position: absolute;
+    top: -8px;
+    right: -9px;
+    width: 14px;
+    height: 14px;
+    border-top: 4px solid var(--orange);
+    border-right: 4px solid var(--orange);
+    content: "";
+    transform: rotate(48deg);
+  }
+
+  .orientation-gate__eyebrow {
+    color: var(--cyan-dark);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+  }
+
+  .orientation-gate h1 {
+    margin: 9px 0 12px;
+    font-family: Impact, "Arial Narrow", sans-serif;
+    font-size: clamp(42px, 14vw, 60px);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+
+  .orientation-gate p {
+    max-width: 22em;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .orientation-gate__status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 28px;
+    padding: 9px 14px;
+    background: var(--ink);
+    color: #fff;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .orientation-gate__status i {
+    width: 8px;
+    aspect-ratio: 1;
+    background: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0, 168, 215, 0.2);
+  }
+}
+
+@media (max-width: 960px) and (max-height: 500px) and (orientation: landscape) {
+  .app-shell {
+    overflow: visible;
+  }
+
+  .app-header {
+    min-height: 52px;
+  }
+
+  .brand {
+    min-width: 260px;
+    gap: 10px;
+    padding: 7px 24px 7px 18px;
+  }
+
+  .brand__mark {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+
+  .brand__mark i {
+    width: 29px;
+    height: 5px;
+  }
+
+  .brand strong {
+    font-size: 16px;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .top-nav {
+    margin-right: 0;
+  }
+
+  .nav-button {
+    min-width: 124px;
+    gap: 7px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .nav-button svg {
+    width: 19px;
+  }
+
+  .draw-page,
+  .panel-page {
+    min-height: calc(100svh - 52px);
+    padding: 8px 16px 18px 38px;
+  }
+
+  .board-heading,
+  .panel-titlebar {
+    margin-bottom: 7px;
+  }
+
+  .board-heading__meta,
+  .candidate-readout {
+    padding-left: 10px;
+    border-left-width: 3px;
+  }
+
+  .board-heading__meta strong,
+  .candidate-readout strong {
+    font-size: 30px;
+  }
+
+  .board-heading__meta span,
+  .candidate-readout span,
+  .candidate-readout small {
+    font-size: 9px;
+  }
+
+  .squad-layout {
+    grid-template-columns: minmax(0, 1fr) 128px;
+    gap: 8px;
+  }
+
+  .operator-grid {
+    gap: 6px;
+  }
+
+  .operator-slot {
+    aspect-ratio: 0.92;
+  }
+
+  .operator-card__class {
+    width: 27px;
+  }
+
+  .operator-card__class img {
+    width: 21px;
+    height: 21px;
+  }
+
+  .operator-card__footer {
+    min-height: 18%;
+    padding: 4px 6px;
+  }
+
+  .operator-card__footer strong {
+    font-size: 11px;
+  }
+
+  .draw-rail {
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .draw-rail__pool {
+    padding: 6px 9px;
+    border-top-width: 3px;
+  }
+
+  .draw-rail__pool strong {
+    font-size: 28px;
+  }
+
+  .draw-button {
+    min-height: 0;
+    gap: 4px;
+    padding: 12px 14px;
+  }
+
+  .draw-button::after {
+    height: 5px;
+  }
+
+  .draw-button svg {
+    width: 32px;
+  }
+
+  .draw-button__label span {
+    font-size: 23px;
+  }
+
+  .status-strip {
+    min-height: 28px;
+    gap: 7px;
+    margin-top: 6px;
+    padding: 4px 9px;
+    font-size: 9px;
+  }
+
+  .status-strip i {
+    height: 12px;
+    margin: 0 2px;
+  }
+
+  .legal-note {
+    display: none;
+  }
+
+  .panel-titlebar {
+    padding-bottom: 8px;
+  }
+
+  .back-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .panel-titlebar h1 {
+    font-size: 28px;
   }
 }
 
