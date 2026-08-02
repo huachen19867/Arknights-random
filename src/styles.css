@@ -240,7 +240,8 @@ select:focus-visible {
 
 .squad-board,
 .settings-panel,
-.ban-panel {
+.ban-panel,
+.plan-panel {
   width: min(1680px, 100%);
   margin: 0 auto;
 }
@@ -294,6 +295,10 @@ select:focus-visible {
   font-weight: 900;
   letter-spacing: 0.08em;
   line-height: 1;
+}
+
+.board-heading__meta {
+  margin-left: auto;
 }
 
 .board-heading__meta,
@@ -452,12 +457,48 @@ select:focus-visible {
   z-index: 5;
   top: 4%;
   left: 7%;
-  padding: 3px 7px;
+  display: grid;
+  width: clamp(30px, 2.6vw, 36px);
+  aspect-ratio: 1;
+  place-items: center;
   background: var(--ink);
   color: #fff;
-  font-size: clamp(8px, 0.65vw, 11px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  box-shadow: 0 2px 6px rgba(15, 19, 21, 0.4);
+}
+
+.operator-card__class img,
+.plan-profession-button img,
+.plan-slot img,
+.profession-option__icon img,
+.plan-slot-chip img {
+  display: block;
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+}
+
+.operator-card--shortage {
+  background: #565d5f;
+}
+
+.operator-card--shortage::before {
+  background: linear-gradient(135deg, #6a7172 0 16%, #4a5052 16.4% 38%, #33393b 38.3% 100%);
+  opacity: 0.9;
+}
+
+.operator-card__shortage {
+  position: absolute;
+  z-index: 5;
+  top: 46%;
+  left: 50%;
+  padding: 5px 9px;
+  transform: translate(-50%, -50%);
+  background: rgba(23, 27, 29, 0.82);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
 }
 
 .stars {
@@ -755,17 +796,19 @@ select:focus-visible {
   stroke-width: 1.4;
 }
 
-.draw-button strong {
+.draw-button__label {
   position: relative;
   z-index: 2;
+  display: block;
 }
 
-.draw-button strong {
-  max-width: 4em;
-  font-size: clamp(28px, 2.3vw, 44px);
+.draw-button__label span {
+  display: block;
+  font-size: clamp(26px, 2.2vw, 42px);
   font-weight: 900;
-  letter-spacing: 0.06em;
-  line-height: 1.03;
+  letter-spacing: 0.08em;
+  line-height: 1.06;
+  white-space: nowrap;
 }
 
 .draw-button__scan {
@@ -951,11 +994,33 @@ select:focus-visible {
   opacity: 0;
 }
 
-.rarity-option--selected,
-.profession-option--selected {
+.rarity-option--selected {
   border-color: var(--ink);
   background: var(--ink);
   color: #fff;
+}
+
+.profession-option--selected {
+  border-color: var(--cyan-dark);
+  background: var(--cyan-dark);
+  color: #fff;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.82),
+    0 8px 18px rgba(3, 125, 160, 0.3);
+}
+
+.profession-option--selected small {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.profession-option:hover:not(.profession-option--selected) {
+  border-color: rgba(3, 125, 160, 0.55);
+  background: #d6dedc;
+  color: var(--cyan-dark);
+}
+
+.profession-option:focus-visible {
+  outline-offset: 4px;
 }
 
 .rarity-option--selected::after,
@@ -1003,10 +1068,9 @@ select:focus-visible {
   text-align: left;
 }
 
-.profession-option__sigil {
+.profession-option__icon {
+  display: block;
   margin-bottom: auto;
-  font-family: Impact, "Arial Narrow", sans-serif;
-  font-size: 22px;
 }
 
 .profession-option strong {
@@ -1433,6 +1497,309 @@ select:focus-visible {
   text-align: center;
 }
 
+/* ===== 自选职业页 ===== */
+.plan-panel {
+  padding: clamp(18px, 2vw, 30px);
+  border: 1px solid rgba(23, 29, 31, 0.16);
+  background: rgba(248, 249, 248, 0.82);
+  box-shadow: 0 10px 24px rgba(33, 40, 42, 0.08);
+}
+
+.plan-readout {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: end;
+  gap: 0 10px;
+  margin-left: auto;
+  padding-left: 18px;
+  border-left: 4px solid var(--cyan);
+}
+
+.plan-readout span {
+  grid-column: 1;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.plan-readout strong {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  font-family: Impact, "Arial Narrow", sans-serif;
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 0.9;
+}
+
+.plan-readout small {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.clear-all-button {
+  margin-left: 16px;
+  padding: 8px 14px;
+  border: 1px solid var(--red);
+  background: transparent;
+  color: var(--red);
+  font-size: 13px;
+}
+
+.clear-all-button:hover:not(:disabled) {
+  background: var(--red);
+  color: #fff;
+}
+
+.plan-toolbar {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.plan-profession-button {
+  position: relative;
+  display: flex;
+  min-height: 108px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid rgba(22, 28, 30, 0.18);
+  background: #e5e8e7;
+  color: #4d5557;
+  text-align: left;
+}
+
+.plan-profession-button img {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+
+.plan-profession-button strong {
+  margin-top: auto;
+  font-size: 15px;
+}
+
+.plan-profession-button small {
+  min-height: 12px;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: var(--cyan-dark);
+}
+
+.plan-profession-button:hover:not(:disabled) {
+  border-color: var(--cyan-dark);
+  background: #d6dedc;
+  color: var(--cyan-dark);
+}
+
+.plan-profession-button:active:not(:disabled) {
+  background: var(--cyan-dark);
+  color: #fff;
+}
+
+.plan-profession-button:disabled {
+  filter: grayscale(0.5) opacity(0.55);
+}
+
+.plan-toolbar__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.plan-toolbar__actions button {
+  padding: 7px 14px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  font-size: 13px;
+}
+
+.plan-toolbar__actions button:hover:not(:disabled) {
+  background: var(--ink);
+  color: #fff;
+}
+
+.plan-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.plan-slot {
+  position: relative;
+  display: flex;
+  min-height: 96px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid rgba(22, 28, 30, 0.18);
+  background: var(--ink);
+  color: #fff;
+  text-align: left;
+  clip-path: polygon(0 0, 100% 0, 100% 86%, 88% 100%, 0 100%);
+}
+
+.plan-slot__index {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: Consolas, monospace;
+  font-size: 11px;
+}
+
+.plan-slot img {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+}
+
+.plan-slot strong {
+  margin-top: auto;
+  font-size: 14px;
+}
+
+.plan-slot:hover {
+  filter: brightness(1.25);
+}
+
+.plan-empty {
+  display: flex;
+  min-height: 220px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed rgba(22, 28, 30, 0.35);
+  background: rgba(232, 235, 234, 0.7);
+  color: var(--muted);
+  text-align: center;
+}
+
+.plan-empty svg {
+  width: 42px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.plan-empty strong {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+.plan-empty span {
+  max-width: 420px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.plan-status {
+  margin-top: 14px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--line);
+  background: rgba(247, 248, 247, 0.67);
+  color: #50585b;
+  font-size: 12px;
+}
+
+.plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.plan-actions button {
+  padding: 12px 22px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.plan-actions button:hover:not(:disabled) {
+  background: var(--ink);
+  color: #fff;
+}
+
+.plan-actions__use {
+  background: var(--orange);
+  border-color: var(--orange) !important;
+  color: #fff;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 92% 100%, 0 100%);
+}
+
+.plan-actions__use:hover:not(:disabled) {
+  background: var(--orange) !important;
+  filter: brightness(1.08);
+  color: #fff !important;
+}
+
+/* ===== 设置页自选职业模式联动 ===== */
+.mode-tag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: var(--cyan-dark);
+  color: #fff;
+  font-family: Consolas, monospace;
+  font-size: 10px !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.plan-switch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plan-summary-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-slot-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plan-slot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+}
+
+.plan-summary-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.plan-summary-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.count-locked-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
 @media (max-width: 1100px) {
   .draw-page,
   .panel-page {
@@ -1454,6 +1821,14 @@ select:focus-visible {
 
   .profession-options {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .plan-toolbar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .plan-slot-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .ban-toolbar {
@@ -1480,7 +1855,14 @@ select:focus-visible {
 
   .brand {
     min-width: 0;
-    padding: 10px 24px 10px 14px;
+    padding: 10px 18px 10px 14px;
+    gap: 10px;
+  }
+
+  .brand strong {
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
   }
 
   .brand__mark {
@@ -1508,8 +1890,8 @@ select:focus-visible {
   }
 
   .nav-button {
-    min-width: 56px;
-    padding: 0 10px;
+    min-width: 52px;
+    padding: 0 8px;
   }
 
   .draw-page,
@@ -1558,7 +1940,7 @@ select:focus-visible {
     width: 38px;
   }
 
-  .draw-button strong {
+  .draw-button__label span {
     font-size: 28px;
   }
 
@@ -1591,8 +1973,46 @@ select:focus-visible {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .panel-titlebar .candidate-readout {
+  .panel-titlebar .candidate-readout,
+  .plan-readout {
     display: none;
+  }
+
+  .clear-all-button {
+    margin-left: 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .plan-toolbar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .plan-profession-button {
+    min-height: 96px;
+    padding: 9px;
+  }
+
+  .plan-slot-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .plan-slot {
+    min-height: 88px;
+    padding: 10px;
+  }
+
+  .plan-toolbar__actions {
+    justify-content: stretch;
+  }
+
+  .plan-toolbar__actions button {
+    flex: 1;
+  }
+
+  .plan-actions button {
+    flex: 1;
   }
 
   .ban-toolbar {

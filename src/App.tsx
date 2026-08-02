@@ -1,17 +1,60 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AppHeader } from './components/AppHeader'
 import { useOperatorData } from './hooks/useOperatorData'
-import { drawOperatorResults, filterOperators } from './lib/operators'
-import { loadSettings, saveSettings } from './lib/settings'
+import {
+  drawOperatorResults,
+  drawOperatorResultsByProfessionSlots,
+  filterOperators,
+  filterOperatorsForPlan,
+  professionSlotStats,
+} from './lib/operators'
+import { getEffectiveDrawConfig, loadSettings, saveSettings } from './lib/settings'
 import { BanPage } from './pages/BanPage'
 import { DrawPage } from './pages/DrawPage'
 import { PortraitSamplePage } from './pages/PortraitSamplePage'
+import { ProfessionPlanPage } from './pages/ProfessionPlanPage'
 import { SettingsPage } from './pages/SettingsPage'
 import type { AppPage, DrawResult, DrawSettings } from './types'
 
 function pageFromHash(): AppPage {
   const page = window.location.hash.replace('#/', '')
-  return page === 'settings' || page === 'ban' || page === 'portrait-test' ? page : 'draw'
+  return page === 'settings' || page === 'ban' || page === 'profession-plan' || page === 'portrait-test'
+    ? page
+    : 'draw'
+}
+
+/** 按结果统计随机技能/模组的提示语，两种抽取模式共用。 */
+function buildRandomNotices(results: DrawResult[], settings: DrawSettings): string[] {
+  const notices: string[] = []
+  if (settings.randomSkill) {
+    const missing = results.filter((result) => result.skillState === 'missing').length
+    const unavailable = results.filter((result) => result.skillState === 'unavailable').length
+    notices.push(
+      missing > 0 || unavailable > 0
+        ? [
+            missing > 0 ? `${missing} 名干员缺少技能数据` : '',
+            unavailable > 0 ? `${unavailable} 名干员没有可用技能` : '',
+          ]
+            .filter(Boolean)
+            .join('，') + '。'
+        : '已为每名干员独立随机一个技能。',
+    )
+  }
+  if (settings.randomModule) {
+    const missing = results.filter((result) => result.moduleState === 'missing').length
+    const unavailable = results.filter((result) => result.moduleState === 'unavailable').length
+    notices.push(
+      missing > 0 || unavailable > 0
+        ? [
+            missing > 0 ? `${missing} 名干员缺少模组数据` : '',
+            unavailable > 0 ? `${unavailable} 名干员没有可用模组` : '',
+          ]
+            .filter(Boolean)
+            .join('，') + '。'
+        : '已为每名干员独立随机一个模组。',
+    )
+  }
+  return notices
 }
 
 export function App() {
@@ -23,7 +66,18 @@ export function App() {
   const [notice, setNotice] = useState('')
   const drawTimer = useRef<number | undefined>(undefined)
 
-  const candidates = useMemo(() => filterOperators(operators, settings), [operators, settings])
+  const effective = useMemo(() => getEffectiveDrawConfig(settings), [settings])
+  const candidates = useMemo(
+    () =>
+      effective.drawMode === 'profession-plan'
+        ? filterOperatorsForPlan(operators, settings)
+        : filterOperators(operators, settings),
+    [operators, settings, effective.drawMode],
+  )
+  const planStats = useMemo(
+    () => (effective.drawMode === 'profession-plan' ? professionSlotStats(operators, settings) : undefined),
+    [operators, settings, effective.drawMode],
+  )
 
   useEffect(() => saveSettings(settings, window.localStorage), [settings])
 
@@ -51,8 +105,36 @@ export function App() {
   }
 
   const draw = () => {
-    if (drawing || candidates.length === 0) {
-      if (candidates.length === 0) setNotice('没有符合当前条件的干员，请检查筛选与 Ban 名单。')
+    if (drawing) return
+
+    if (effective.drawMode === 'profession-plan') {
+      if (settings.professionSlots.length === 0) {
+        setNotice('尚未添加职业名额，请前往自选职业页设置方案。')
+        return
+      }
+      try {
+        const selected = drawOperatorResultsByProfessionSlots(operators, settings)
+        setResults(selected)
+        setDrawing(true)
+        const stats = professionSlotStats(operators, settings)
+        const parts = [`已满足 ${stats.satisfiable} / ${stats.total} 个职业名额。`]
+        for (const shortage of stats.shortages) {
+          parts.push(
+            `${shortage.profession}需要 ${shortage.needed} 名，当前仅 ${shortage.available} 名符合星级与 Ban 条件，${shortage.missing} 个名额留空。`,
+          )
+        }
+        setNotice([...parts, ...buildRandomNotices(selected, settings)].join(' '))
+        drawTimer.current = window.setTimeout(() => setDrawing(false), 900)
+      } catch (error) {
+        setResults([])
+        setDrawing(false)
+        setNotice(error instanceof Error ? `抽取失败：${error.message}` : '抽取失败，请刷新页面后重试。')
+      }
+      return
+    }
+
+    if (candidates.length === 0) {
+      setNotice('没有符合当前条件的干员，请检查筛选与 Ban 名单。')
       return
     }
 
@@ -69,31 +151,7 @@ export function App() {
         candidates.length < settings.count
           ? `候选池仅有 ${candidates.length} 人，已展示全部候选，不会重复抽取。`
           : `已从 ${candidates.length} 名候选中无重复抽取 ${selected.length} 人。`
-      const missingSkillCount = selected.filter((result) => result.skillState === 'missing').length
-      const unavailableSkillCount = selected.filter((result) => result.skillState === 'unavailable').length
-      const skillNotice = settings.randomSkill
-        ? missingSkillCount > 0 || unavailableSkillCount > 0
-          ? [
-              missingSkillCount > 0 ? `${missingSkillCount} 名干员缺少技能数据` : '',
-              unavailableSkillCount > 0 ? `${unavailableSkillCount} 名干员没有可用技能` : '',
-            ]
-              .filter(Boolean)
-              .join('，') + '。'
-          : '已为每名干员独立随机一个技能。'
-        : ''
-      const missingModuleCount = selected.filter((result) => result.moduleState === 'missing').length
-      const unavailableModuleCount = selected.filter((result) => result.moduleState === 'unavailable').length
-      const moduleNotice = settings.randomModule
-        ? missingModuleCount > 0 || unavailableModuleCount > 0
-          ? [
-              missingModuleCount > 0 ? `${missingModuleCount} 名干员缺少模组数据` : '',
-              unavailableModuleCount > 0 ? `${unavailableModuleCount} 名干员没有可用模组` : '',
-            ]
-              .filter(Boolean)
-              .join('，') + '。'
-          : '已为每名干员独立随机一个模组。'
-        : ''
-      setNotice([drawNotice, skillNotice, moduleNotice].filter(Boolean).join(' '))
+      setNotice([drawNotice, ...buildRandomNotices(selected, settings)].join(' '))
       drawTimer.current = window.setTimeout(() => setDrawing(false), 900)
     } catch (error) {
       setResults([])
@@ -104,17 +162,32 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <AppHeader page={page} onNavigate={navigate} bannedCount={settings.bannedIds.length} />
+      <AppHeader
+        page={page}
+        onNavigate={navigate}
+        bannedCount={settings.bannedIds.length}
+        professionSlotCount={settings.professionSlots.length}
+      />
       {page === 'settings' && (
         <SettingsPage
           settings={settings}
           onChange={setSettings}
           onBack={() => navigate('draw')}
+          onGoToProfessionPlan={() => navigate('profession-plan')}
+          onSwitchToRange={() => setSettings({ ...settings, drawMode: 'range' })}
           candidateCount={candidates.length}
         />
       )}
       {page === 'ban' && (
         <BanPage operators={operators} settings={settings} onChange={setSettings} onBack={() => navigate('draw')} />
+      )}
+      {page === 'profession-plan' && (
+        <ProfessionPlanPage
+          settings={settings}
+          onChange={setSettings}
+          onBack={() => navigate('draw')}
+          onUsePlan={() => navigate('draw')}
+        />
       )}
       {page === 'portrait-test' && <PortraitSamplePage operators={operators} onBack={() => navigate('draw')} />}
       {page === 'draw' && (
@@ -122,6 +195,7 @@ export function App() {
           settings={settings}
           candidates={candidates}
           results={results}
+          planStats={planStats}
           dataSource={source}
           loading={loading}
           drawing={drawing}

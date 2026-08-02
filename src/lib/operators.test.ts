@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 import type { DrawSettings, Operator } from '../types'
 import {
   drawOperatorResults,
+  drawOperatorResultsByProfessionSlots,
   drawOperators,
   filterOperators,
+  filterOperatorsForPlan,
   normalizeOperatorPayload,
+  professionSlotStats,
   secureRandomInt,
 } from './operators'
 
@@ -24,6 +27,8 @@ function settings(overrides: Partial<DrawSettings> = {}): DrawSettings {
     bannedIds: [],
     randomSkill: false,
     randomModule: false,
+    drawMode: 'range',
+    professionSlots: [],
     ...overrides,
   }
 }
@@ -81,6 +86,154 @@ describe('filterOperators', () => {
 
   it('空选择得到空候选池', () => {
     expect(filterOperators(operators, settings({ rarities: [] }))).toEqual([])
+  })
+})
+
+describe('filterOperatorsForPlan', () => {
+  it('忽略普通职业范围，只按启用、星级与 Ban 过滤', () => {
+    const result = filterOperatorsForPlan(
+      operators,
+      settings({ rarities: [5, 6], professions: ['医疗'], bannedIds: ['a'] }),
+    )
+    expect(result.map((item) => item.id)).toEqual(['b', 'c'])
+  })
+
+  it('防御性排除未启用记录', () => {
+    const result = filterOperatorsForPlan(operators, settings({ rarities: [5] }))
+    expect(result.map((item) => item.id)).toEqual(['c'])
+  })
+})
+
+describe('professionSlotStats', () => {
+  it('统计可满足名额与按职业缺口', () => {
+    const stats = professionSlotStats(
+      operators,
+      settings({ drawMode: 'profession-plan', professionSlots: ['近卫', '近卫', '医疗', '狙击', '狙击', '狙击'] }),
+    )
+    expect(stats.total).toBe(6)
+    expect(stats.satisfiable).toBe(4)
+    expect(stats.shortages).toEqual([{ profession: '狙击', needed: 3, available: 1, missing: 2 }])
+  })
+
+  it('空方案总名额为零且无缺口', () => {
+    const stats = professionSlotStats(operators, settings({ drawMode: 'profession-plan', professionSlots: [] }))
+    expect(stats.total).toBe(0)
+    expect(stats.satisfiable).toBe(0)
+    expect(stats.shortages).toEqual([])
+  })
+})
+
+describe('drawOperatorResultsByProfessionSlots', () => {
+  it('按槽位顺序精确抽取：1 先锋 + 2 个不重复近卫 + 1 医疗', () => {
+    const planOperators: Operator[] = [
+      { id: 'v1', name: '先锋甲', rarity: 6, profession: '先锋' },
+      { id: 'v2', name: '先锋乙', rarity: 5, profession: '先锋' },
+      { id: 'g1', name: '近卫甲', rarity: 6, profession: '近卫' },
+      { id: 'g2', name: '近卫乙', rarity: 5, profession: '近卫' },
+      { id: 'g3', name: '近卫丙', rarity: 4, profession: '近卫' },
+      { id: 'm1', name: '医疗甲', rarity: 6, profession: '医疗' },
+      { id: 's1', name: '狙击甲', rarity: 6, profession: '狙击' },
+    ]
+    const planSettings = settings({
+      drawMode: 'profession-plan',
+      professionSlots: ['先锋', '近卫', '近卫', '医疗'],
+      randomSkill: false,
+      randomModule: false,
+    })
+    const results = drawOperatorResultsByProfessionSlots(planOperators, planSettings)
+    expect(results).toHaveLength(4)
+    expect(results.map((result) => result.expectedProfession)).toEqual(['先锋', '近卫', '近卫', '医疗'])
+    expect(results[0].operator?.profession).toBe('先锋')
+    expect(results[1].operator?.profession).toBe('近卫')
+    expect(results[2].operator?.profession).toBe('近卫')
+    expect(results[1].operator?.id).not.toBe(results[2].operator?.id)
+    expect(results[3].operator?.profession).toBe('医疗')
+    expect(results.every((result) => !result.shortage)).toBe(true)
+  })
+
+  it('候选不足时槽位保留位置并标记 shortage，不用其他职业补位、不重复干员', () => {
+    const planSettings = settings({
+      drawMode: 'profession-plan',
+      professionSlots: ['近卫', '近卫', '近卫', '医疗'],
+      rarities: [4, 5, 6],
+    })
+    const results = drawOperatorResultsByProfessionSlots(operators, planSettings)
+    expect(results).toHaveLength(4)
+    expect(results.map((result) => result.expectedProfession)).toEqual(['近卫', '近卫', '近卫', '医疗'])
+    const picked = results.filter((result) => result.operator).map((result) => result.operator?.id)
+    expect(new Set(picked).size).toBe(picked.length)
+    expect(results.filter((result) => result.shortage)).toHaveLength(1)
+    expect(results[2]).toMatchObject({ shortage: true, operator: undefined, expectedProfession: '近卫' })
+    expect(results[3].operator?.profession).toBe('医疗')
+  })
+
+  it('遵守星级与 Ban 名单：被 Ban 的近卫不再可选', () => {
+    const planSettings = settings({
+      drawMode: 'profession-plan',
+      professionSlots: ['近卫'],
+      rarities: [5, 6],
+      bannedIds: ['a'],
+    })
+    const results = drawOperatorResultsByProfessionSlots(operators, planSettings)
+    expect(results[0].operator?.id).toBe('c')
+  })
+
+  it('星级过滤后职业候选不足时返回空缺槽', () => {
+    const planSettings = settings({
+      drawMode: 'profession-plan',
+      professionSlots: ['近卫'],
+      rarities: [6],
+      bannedIds: ['a'],
+    })
+    const results = drawOperatorResultsByProfessionSlots(operators, planSettings)
+    expect(results[0]).toMatchObject({ shortage: true, operator: undefined, expectedProfession: '近卫' })
+  })
+
+  it('随机技能与随机模组在抽取阶段写入本轮固定结果', () => {
+    const planOperators: Operator[] = [
+      {
+        ...operators[0],
+        skills: [
+          { index: 1, name: '一技能' },
+          { index: 2, name: '二技能' },
+        ],
+        modules: [
+          { id: 'a:AFT-X', index: 1, name: '模组甲', code: 'AFT-X' },
+          { id: 'a:AFT-Y', index: 2, name: '模组乙', code: 'AFT-Y' },
+        ],
+      },
+      { ...operators[1], skills: [], modules: [] },
+      operators[2],
+    ]
+    const values = [0, 0, 1]
+    let cursor = 0
+    const cryptoApi = {
+      getRandomValues(array: Uint32Array) {
+        array[0] = values[cursor++] ?? 0
+        return array
+      },
+    } as unknown as Crypto
+    const planSettings = settings({
+      drawMode: 'profession-plan',
+      professionSlots: ['近卫', '狙击'],
+      randomSkill: true,
+      randomModule: true,
+    })
+    const results = drawOperatorResultsByProfessionSlots(planOperators, planSettings, cryptoApi)
+    expect(results[0].skillState).toBe('selected')
+    expect(results[0].skill).toEqual({ index: 1, name: '一技能' })
+    expect(results[0].moduleState).toBe('selected')
+    expect(results[0].module).toEqual({ id: 'a:AFT-Y', index: 2, name: '模组乙', code: 'AFT-Y' })
+    expect(results[1].skillState).toBe('unavailable')
+    expect(results[1].moduleState).toBe('unavailable')
+  })
+
+  it('空方案返回空结果', () => {
+    const results = drawOperatorResultsByProfessionSlots(
+      operators,
+      settings({ drawMode: 'profession-plan', professionSlots: [] }),
+    )
+    expect(results).toEqual([])
   })
 })
 

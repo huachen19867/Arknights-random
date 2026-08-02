@@ -6,6 +6,7 @@ import {
   type Operator,
   type OperatorModule,
   type OperatorSkill,
+  type Profession,
 } from '../types'
 
 export function isOperatorSkill(value: unknown): value is OperatorSkill {
@@ -160,6 +161,111 @@ export function drawOperatorResults(
       }
     }
     if (randomModule) {
+      if (operator.modules === undefined) {
+        result.moduleState = 'missing'
+      } else if (operator.modules.length === 0) {
+        result.moduleState = 'unavailable'
+      } else {
+        result.module = pickOperatorModule(operator, cryptoApi)
+        result.moduleState = 'selected'
+      }
+    }
+    return result
+  })
+}
+export interface ProfessionSlotShortage {
+  profession: Profession
+  /** 方案中该职业占用的名额数。 */
+  needed: number
+  /** 符合星级与 Ban 条件的候选数。 */
+  available: number
+  /** 无法满足的名额数。 */
+  missing: number
+}
+
+export interface ProfessionSlotStats {
+  /** 当前可满足的名额数。 */
+  satisfiable: number
+  /** 方案总名额数。 */
+  total: number
+  shortages: ProfessionSlotShortage[]
+}
+
+/** 自选职业模式候选池：只按启用、星级和 Ban 过滤，不使用普通职业范围。 */
+export function filterOperatorsForPlan(operators: Operator[], settings: DrawSettings): Operator[] {
+  const allowedRarities = new Set(settings.rarities)
+  const bannedIds = new Set(settings.bannedIds)
+  return operators.filter(
+    (operator) =>
+      operator.enabled !== false &&
+      allowedRarities.has(operator.rarity) &&
+      !bannedIds.has(operator.id),
+  )
+}
+
+/** 按职业统计名额缺口；同一职业重复名额共享该职业候选池，因此各职业独立求和即可。 */
+export function professionSlotStats(operators: Operator[], settings: DrawSettings): ProfessionSlotStats {
+  const candidates = filterOperatorsForPlan(operators, settings)
+  const availableByProfession = new Map<Profession, number>()
+  for (const operator of candidates) {
+    availableByProfession.set(operator.profession, (availableByProfession.get(operator.profession) ?? 0) + 1)
+  }
+  const neededByProfession = new Map<Profession, number>()
+  for (const profession of settings.professionSlots) {
+    neededByProfession.set(profession, (neededByProfession.get(profession) ?? 0) + 1)
+  }
+  let satisfiable = 0
+  const shortages: ProfessionSlotShortage[] = []
+  for (const [profession, needed] of neededByProfession) {
+    const available = availableByProfession.get(profession) ?? 0
+    satisfiable += Math.min(needed, available)
+    if (available < needed) {
+      shortages.push({ profession, needed, available, missing: needed - available })
+    }
+  }
+  return { satisfiable, total: settings.professionSlots.length, shortages }
+}
+
+/**
+ * 按职业名额精确抽取：每个槽位只从对应职业且本轮尚未使用的候选中安全随机一名；
+ * 候选不足的槽位保留位置并标记 shortage，不用其他职业补位、不重复干员。
+ * 随机技能/随机模组在抽取阶段写入本轮固定结果。
+ */
+export function drawOperatorResultsByProfessionSlots(
+  operators: Operator[],
+  settings: DrawSettings,
+  cryptoApi: Crypto = globalThis.crypto,
+): DrawResult[] {
+  const candidates = filterOperatorsForPlan(operators, settings)
+  const poolByProfession = new Map<Profession, Operator[]>()
+  for (const operator of candidates) {
+    const pool = poolByProfession.get(operator.profession) ?? []
+    pool.push(operator)
+    poolByProfession.set(operator.profession, pool)
+  }
+
+  const usedIds = new Set<string>()
+  return settings.professionSlots.map((profession) => {
+    const remaining = (poolByProfession.get(profession) ?? []).filter(
+      (operator) => !usedIds.has(operator.id),
+    )
+    if (remaining.length === 0) {
+      return { operator: undefined, expectedProfession: profession, shortage: true }
+    }
+    const operator = remaining[secureRandomInt(remaining.length, cryptoApi)]
+    usedIds.add(operator.id)
+    const result: DrawResult = { operator, expectedProfession: profession }
+    if (settings.randomSkill) {
+      if (operator.skills === undefined) {
+        result.skillState = 'missing'
+      } else if (operator.skills.length === 0) {
+        result.skillState = 'unavailable'
+      } else {
+        result.skill = pickOperatorSkill(operator, cryptoApi)
+        result.skillState = 'selected'
+      }
+    }
+    if (settings.randomModule) {
       if (operator.modules === undefined) {
         result.moduleState = 'missing'
       } else if (operator.modules.length === 0) {
