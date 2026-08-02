@@ -1,14 +1,14 @@
+import { useState } from 'react'
 import { PROFESSIONS, RARITIES, type DrawSettings, type Profession, type Rarity } from '../types'
-import { ArrowIcon } from '../components/Icons'
+import { ArrowIcon, PlanIcon } from '../components/Icons'
 import { ProfessionIcon } from '../components/ProfessionIcon'
 import { Stars } from '../components/Stars'
-import { getEffectiveDrawConfig } from '../lib/settings'
+import { getEffectiveDrawConfig, MAX_PROFESSION_SLOTS } from '../lib/settings'
 
 interface SettingsPageProps {
   settings: DrawSettings
   onChange: (settings: DrawSettings) => void
   onBack: () => void
-  onGoToProfessionPlan: () => void
   candidateCount: number
 }
 
@@ -16,13 +16,8 @@ function toggleValue<T>(items: T[], value: T): T[] {
   return items.includes(value) ? items.filter((item) => item !== value) : [...items, value]
 }
 
-export function SettingsPage({
-  settings,
-  onChange,
-  onBack,
-  onGoToProfessionPlan,
-  candidateCount,
-}: SettingsPageProps) {
+export function SettingsPage({ settings, onChange, onBack, candidateCount }: SettingsPageProps) {
+  const [planNotice, setPlanNotice] = useState('')
   const effective = getEffectiveDrawConfig(settings)
   const planActive = effective.drawMode === 'profession-plan'
   const slotCounts = PROFESSIONS.map((profession) => ({
@@ -33,6 +28,37 @@ export function SettingsPage({
 
   const update = <K extends keyof DrawSettings>(key: K, value: DrawSettings[K]) => {
     onChange({ ...settings, [key]: value })
+  }
+
+  const addSlot = (profession: Profession) => {
+    if (settings.professionSlots.length >= MAX_PROFESSION_SLOTS) {
+      setPlanNotice(`已达到 ${MAX_PROFESSION_SLOTS} 个职业名额`)
+      return
+    }
+    setPlanNotice('')
+    onChange({
+      ...settings,
+      drawMode: 'profession-plan',
+      professionSlots: [...settings.professionSlots, profession],
+    })
+  }
+
+  const selectAll = () => {
+    setPlanNotice('')
+    onChange({ ...settings, drawMode: 'profession-plan', professionSlots: [...PROFESSIONS] })
+  }
+
+  const clearAll = () => {
+    setPlanNotice('')
+    onChange({ ...settings, professionSlots: [] })
+  }
+
+  const removeSlot = (index: number) => {
+    setPlanNotice('')
+    onChange({
+      ...settings,
+      professionSlots: settings.professionSlots.filter((_, slotIndex) => slotIndex !== index),
+    })
   }
 
   return (
@@ -115,25 +141,72 @@ export function SettingsPage({
             </div>
             {planActive ? (
               <div className="plan-summary-block">
-                {slotCounts.length > 0 ? (
-                  <div className="plan-slot-chips">
-                    {slotCounts.map((item) => (
-                      <span key={item.profession} className="plan-slot-chip">
-                        <ProfessionIcon profession={item.profession} />
-                        {item.profession} ×{item.count}
-                      </span>
+                <div className="plan-toolbar" role="group" aria-label="职业名额工具栏">
+                  {PROFESSIONS.map((profession) => {
+                    const count = settings.professionSlots.filter((slot) => slot === profession).length
+                    return (
+                      <button
+                        key={profession}
+                        type="button"
+                        className="plan-profession-button"
+                        onClick={() => addSlot(profession)}
+                        aria-label={`添加一个${profession}名额`}
+                        title={profession}
+                        disabled={settings.professionSlots.length >= MAX_PROFESSION_SLOTS}
+                      >
+                        <ProfessionIcon profession={profession} />
+                        <strong>{profession}</strong>
+                        <small aria-hidden="true">{count > 0 ? `×${count}` : ''}</small>
+                      </button>
+                    )
+                  })}
+                  <div className="plan-toolbar__actions">
+                    <button
+                      type="button"
+                      onClick={selectAll}
+                      disabled={settings.professionSlots.length >= MAX_PROFESSION_SLOTS}
+                    >
+                      全选
+                    </button>
+                    <button type="button" onClick={clearAll} disabled={settings.professionSlots.length === 0}>
+                      清除
+                    </button>
+                  </div>
+                </div>
+
+                {settings.professionSlots.length > 0 ? (
+                  <div className="plan-slot-grid" aria-label="已添加的职业名额">
+                    {settings.professionSlots.map((profession, index) => (
+                      <button
+                        type="button"
+                        key={`${index}-${profession}`}
+                        className="plan-slot"
+                        onClick={() => removeSlot(index)}
+                        aria-label={`移除第 ${index + 1} 个${profession}名额`}
+                        title={`移除第 ${index + 1} 个${profession}名额`}
+                      >
+                        <span className="plan-slot__index">{String(index + 1).padStart(2, '0')}</span>
+                        <ProfessionIcon profession={profession} />
+                        <strong>{profession}</strong>
+                      </button>
                     ))}
                   </div>
                 ) : (
-                  <p className="plan-summary-empty">尚未添加职业名额，点击下方按钮前往自选职业页添加。</p>
+                  <div className="plan-empty">
+                    <PlanIcon />
+                    <strong>还没有职业名额</strong>
+                    <span>点击上方职业添加名额，同一职业可重复，最多 {MAX_PROFESSION_SLOTS} 个。</span>
+                  </div>
                 )}
+
+                <p className="plan-status" role="status" aria-live="polite">
+                  {planNotice || `已添加 ${settings.professionSlots.length} / ${MAX_PROFESSION_SLOTS} 个职业名额`}
+                </p>
+
                 <p className="plan-summary-note">
                   自选职业模式按名额精确配队：每个名额只抽取对应职业。抽取人数固定为名额总数
                   {effective.count}，普通职业范围与人数设置已保留，关闭自选职业后原样恢复。
                 </p>
-                <button type="button" className="plan-goto-button" onClick={onGoToProfessionPlan}>
-                  前往自选职业修改
-                </button>
               </div>
             ) : (
               <div className="profession-block">

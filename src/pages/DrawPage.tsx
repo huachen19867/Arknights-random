@@ -34,7 +34,7 @@ export function DrawPage({
   const startDisabled = drawing || loading || (planActive ? planEmpty : candidates.length === 0)
   const defaultNotice = planActive
     ? planEmpty
-      ? '尚未添加职业名额，请前往自选职业页设置方案。'
+      ? '尚未添加职业名额，请在抽取设置中添加职业名额。'
       : '职业方案就绪，可以开始抽取'
     : candidates.length === 0
       ? '没有符合当前条件的干员，请调整星级、职业或 Ban 名单。'

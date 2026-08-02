@@ -1,14 +1,13 @@
 import type { AppPage } from '../types'
-import { BanIcon, PlanIcon, SettingsIcon } from './Icons'
+import { BanIcon, SettingsIcon } from './Icons'
 
 interface AppHeaderProps {
   page: AppPage
   onNavigate: (page: AppPage) => void
   bannedCount: number
-  professionSlotCount: number
 }
 
-export function AppHeader({ page, onNavigate, bannedCount, professionSlotCount }: AppHeaderProps) {
+export function AppHeader({ page, onNavigate, bannedCount }: AppHeaderProps) {
   return (
     <header className="app-header">
       <button className="brand" type="button" onClick={() => onNavigate('draw')}>
@@ -33,15 +32,7 @@ export function AppHeader({ page, onNavigate, bannedCount, professionSlotCount }
           <span>Ban 干员</span>
           <b>{bannedCount}</b>
         </button>
-        <button
-          type="button"
-          className={page === 'profession-plan' ? 'nav-button nav-button--active' : 'nav-button'}
-          onClick={() => onNavigate('profession-plan')}
-        >
-          <PlanIcon />
-          <span>自选职业</span>
-          <b>{professionSlotCount}</b>
-        </button>
+
         <button
           type="button"
           className={page === 'settings' ? 'nav-button nav-button--active' : 'nav-button'}

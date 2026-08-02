@@ -1710,24 +1710,6 @@ select:focus-visible {
   font-size: 12px;
 }
 
-.plan-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-/* 自选职业页底部的模式开关（与设置页同款，尺寸放大） */
-.plan-mode-switch--large button {
-  padding: 12px 22px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.plan-mode-switch--large button::before {
-  width: 8px;
-  height: 8px;
-}
 
 /* ===== 设置页自选职业模式联动 ===== */
 .mode-tag {
@@ -2073,13 +2055,6 @@ select:focus-visible {
     flex: 1;
   }
 
-  .plan-actions .plan-mode-switch {
-    width: 100%;
-  }
-
-  .plan-actions .plan-mode-switch button {
-    flex: 1;
-  }
 
   .ban-toolbar {
     grid-template-columns: 1fr 1fr;

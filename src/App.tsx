@@ -12,13 +12,12 @@ import { getEffectiveDrawConfig, loadSettings, saveSettings } from './lib/settin
 import { BanPage } from './pages/BanPage'
 import { DrawPage } from './pages/DrawPage'
 import { PortraitSamplePage } from './pages/PortraitSamplePage'
-import { ProfessionPlanPage } from './pages/ProfessionPlanPage'
 import { SettingsPage } from './pages/SettingsPage'
 import type { AppPage, DrawResult, DrawSettings } from './types'
 
 function pageFromHash(): AppPage {
   const page = window.location.hash.replace('#/', '')
-  return page === 'settings' || page === 'ban' || page === 'profession-plan' || page === 'portrait-test'
+  return page === 'settings' || page === 'ban' || page === 'portrait-test'
     ? page
     : 'draw'
 }
@@ -109,7 +108,7 @@ export function App() {
 
     if (effective.drawMode === 'profession-plan') {
       if (settings.professionSlots.length === 0) {
-        setNotice('尚未添加职业名额，请前往自选职业页设置方案。')
+        setNotice('尚未添加职业名额，请在抽取设置中添加职业名额。')
         return
       }
       try {
@@ -166,28 +165,20 @@ export function App() {
         page={page}
         onNavigate={navigate}
         bannedCount={settings.bannedIds.length}
-        professionSlotCount={settings.professionSlots.length}
+
       />
       {page === 'settings' && (
         <SettingsPage
           settings={settings}
           onChange={setSettings}
           onBack={() => navigate('draw')}
-          onGoToProfessionPlan={() => navigate('profession-plan')}
           candidateCount={candidates.length}
         />
       )}
       {page === 'ban' && (
         <BanPage operators={operators} settings={settings} onChange={setSettings} onBack={() => navigate('draw')} />
       )}
-      {page === 'profession-plan' && (
-        <ProfessionPlanPage
-          settings={settings}
-          onChange={setSettings}
-          onBack={() => navigate('draw')}
-          onUsePlan={() => navigate('draw')}
-        />
-      )}
+
       {page === 'portrait-test' && <PortraitSamplePage operators={operators} onBack={() => navigate('draw')} />}
       {page === 'draw' && (
         <DrawPage

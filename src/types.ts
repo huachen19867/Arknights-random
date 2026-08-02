@@ -71,6 +71,6 @@ export interface DrawSettings {
   professionSlots: Profession[]
 }
 
-export type AppPage = 'draw' | 'settings' | 'ban' | 'profession-plan' | 'portrait-test'
+export type AppPage = 'draw' | 'settings' | 'ban' | 'portrait-test'
 
 export type DataSource = 'feishu-export' | 'fallback'
