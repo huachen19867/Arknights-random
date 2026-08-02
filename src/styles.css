@@ -2294,16 +2294,22 @@ select:focus-visible {
   }
 
   .squad-layout {
-    grid-template-columns: minmax(0, 1fr) 112px;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 92px;
+    gap: 4px;
   }
 
   .operator-grid {
-    gap: 6px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+    padding: 0;
+    scroll-snap-type: none;
   }
 
   .operator-slot {
-    aspect-ratio: 1.08;
+    aspect-ratio: 1.2;
+    scroll-snap-align: none;
   }
 
   .operator-card__class {
@@ -2325,6 +2331,7 @@ select:focus-visible {
   }
 
   .draw-rail {
+    grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr);
     gap: 4px;
   }
@@ -2340,8 +2347,10 @@ select:focus-visible {
 
   .draw-button {
     min-height: 0;
+    align-items: flex-start;
     gap: 4px;
-    padding: 9px 11px;
+    padding: 8px;
+    text-align: left;
   }
 
   .draw-button::after {
@@ -2349,11 +2358,15 @@ select:focus-visible {
   }
 
   .draw-button svg {
-    width: 27px;
+    position: static;
+    top: auto;
+    left: auto;
+    width: 22px;
+    margin-bottom: auto;
   }
 
   .draw-button__label span {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .status-strip {
