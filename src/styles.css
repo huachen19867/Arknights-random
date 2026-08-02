@@ -105,7 +105,7 @@ select:focus-visible {
   transform: rotate(45deg);
 }
 
-.orientation-gate {
+.orientation-hint {
   display: none;
 }
 
@@ -2095,156 +2095,124 @@ select:focus-visible {
 }
 
 @media (max-width: 760px) and (orientation: portrait) {
-  .app-shell {
-    min-height: 100svh;
-    overflow: hidden;
-  }
-
-  .app-shell > :not(.orientation-gate) {
-    visibility: hidden;
-  }
-
-  .orientation-gate {
+  .orientation-hint {
     position: fixed;
     z-index: 1000;
-    inset: 0;
+    top: max(18px, env(safe-area-inset-top));
+    right: 14px;
+    left: 14px;
     display: flex;
-    min-height: 100svh;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 16px;
     overflow: hidden;
-    padding: 36px 28px;
-    background:
-      linear-gradient(118deg, transparent 0 12%, rgba(255, 255, 255, 0.9) 12.2% 16%, transparent 16.2%),
-      repeating-linear-gradient(0deg, rgba(18, 28, 32, 0.025) 0 1px, transparent 1px 5px),
-      #e8ebea;
-    color: var(--ink);
-    text-align: center;
+    padding: 15px 18px;
+    border-top: 4px solid var(--cyan);
+    background: rgba(23, 27, 29, 0.96);
+    color: #fff;
+    box-shadow: 0 14px 38px rgba(15, 20, 22, 0.32);
+    pointer-events: none;
+    animation: orientation-hint-in 220ms ease-out both;
   }
 
-  .orientation-gate::before,
-  .orientation-gate::after {
+  .orientation-hint::after {
     position: absolute;
+    top: -30px;
+    right: -38px;
+    width: 92px;
+    aspect-ratio: 1;
+    border: 11px solid rgba(255, 255, 255, 0.055);
     content: "";
     pointer-events: none;
-  }
-
-  .orientation-gate::before {
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 8px;
-    background: linear-gradient(90deg, var(--cyan) 0 62%, var(--orange) 62%);
-  }
-
-  .orientation-gate::after {
-    right: -34vw;
-    bottom: -34vw;
-    width: 76vw;
-    aspect-ratio: 1;
-    border: 22px solid rgba(23, 27, 29, 0.045);
     transform: rotate(45deg);
   }
 
-  .orientation-gate__signal {
+  .orientation-hint__signal {
     position: relative;
-    width: 150px;
-    height: 132px;
-    margin-bottom: 24px;
+    width: 68px;
+    height: 56px;
+    flex: 0 0 68px;
   }
 
-  .orientation-gate__phone {
+  .orientation-hint__phone {
     position: absolute;
-    top: 22px;
-    left: 47px;
-    width: 58px;
-    height: 96px;
-    border: 7px solid var(--ink);
-    background: rgba(255, 255, 255, 0.62);
-    box-shadow: inset 0 -9px 0 var(--cyan), 8px 8px 0 rgba(23, 27, 29, 0.1);
+    top: 10px;
+    left: 20px;
+    width: 30px;
+    height: 48px;
+    border: 4px solid #fff;
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 -5px 0 var(--cyan);
     transform: rotate(90deg);
   }
 
-  .orientation-gate__phone::after {
+  .orientation-hint__phone::after {
     position: absolute;
     top: 50%;
-    right: 4px;
-    width: 5px;
+    right: 2px;
+    width: 3px;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: var(--ink);
+    background: #fff;
     content: "";
     transform: translateY(-50%);
   }
 
-  .orientation-gate__arc {
+  .orientation-hint__arc {
     position: absolute;
-    top: 0;
-    left: 21px;
-    width: 106px;
-    height: 78px;
-    border-top: 4px solid var(--orange);
-    border-right: 4px solid var(--orange);
-    border-radius: 0 80px 0 0;
-    transform: rotate(-18deg);
+    top: 1px;
+    left: 10px;
+    width: 48px;
+    height: 34px;
+    border-top: 3px solid var(--orange);
+    border-right: 3px solid var(--orange);
+    border-radius: 0 44px 0 0;
+    transform: rotate(-16deg);
   }
 
-  .orientation-gate__arc::after {
+  .orientation-hint__arc::after {
     position: absolute;
-    top: -8px;
-    right: -9px;
-    width: 14px;
-    height: 14px;
-    border-top: 4px solid var(--orange);
-    border-right: 4px solid var(--orange);
+    top: -6px;
+    right: -7px;
+    width: 9px;
+    height: 9px;
+    border-top: 3px solid var(--orange);
+    border-right: 3px solid var(--orange);
     content: "";
     transform: rotate(48deg);
   }
 
-  .orientation-gate__eyebrow {
-    color: var(--cyan-dark);
+  .orientation-hint__eyebrow {
+    color: var(--cyan);
     font-family: Consolas, "Courier New", monospace;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.14em;
   }
 
-  .orientation-gate h1 {
-    margin: 9px 0 12px;
-    font-family: Impact, "Arial Narrow", sans-serif;
-    font-size: clamp(42px, 14vw, 60px);
-    font-weight: 500;
-    letter-spacing: 0.08em;
+  .orientation-hint h1 {
+    margin: 3px 0 4px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     line-height: 1;
   }
 
-  .orientation-gate p {
-    max-width: 22em;
+  .orientation-hint p {
     margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.8;
-  }
-
-  .orientation-gate__status {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 28px;
-    padding: 9px 14px;
-    background: var(--ink);
-    color: #fff;
-    font-family: Consolas, "Courier New", monospace;
+    color: #aeb8ba;
     font-size: 10px;
-    letter-spacing: 0.12em;
+    line-height: 1.5;
   }
 
-  .orientation-gate__status i {
-    width: 8px;
-    aspect-ratio: 1;
-    background: var(--cyan);
-    box-shadow: 0 0 0 3px rgba(0, 168, 215, 0.2);
+  @keyframes orientation-hint-in {
+    from {
+      opacity: 0;
+      transform: translateY(-14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 }
 
@@ -2254,28 +2222,28 @@ select:focus-visible {
   }
 
   .app-header {
-    min-height: 52px;
+    min-height: 44px;
   }
 
   .brand {
-    min-width: 260px;
-    gap: 10px;
-    padding: 7px 24px 7px 18px;
+    min-width: 224px;
+    gap: 8px;
+    padding: 5px 20px 5px 14px;
   }
 
   .brand__mark {
-    width: 32px;
-    height: 32px;
-    flex-basis: 32px;
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
   }
 
   .brand__mark i {
-    width: 29px;
-    height: 5px;
+    width: 25px;
+    height: 4px;
   }
 
   .brand strong {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .brand small {
@@ -2287,10 +2255,10 @@ select:focus-visible {
   }
 
   .nav-button {
-    min-width: 124px;
-    gap: 7px;
-    padding: 0 12px;
-    font-size: 12px;
+    min-width: 112px;
+    gap: 6px;
+    padding: 0 10px;
+    font-size: 11px;
   }
 
   .nav-button svg {
@@ -2299,13 +2267,13 @@ select:focus-visible {
 
   .draw-page,
   .panel-page {
-    min-height: calc(100svh - 52px);
-    padding: 8px 16px 18px 38px;
+    min-height: calc(100svh - 44px);
+    padding: 4px 10px 10px 28px;
   }
 
   .board-heading,
   .panel-titlebar {
-    margin-bottom: 7px;
+    margin-bottom: 4px;
   }
 
   .board-heading__meta,
@@ -2316,7 +2284,7 @@ select:focus-visible {
 
   .board-heading__meta strong,
   .candidate-readout strong {
-    font-size: 30px;
+    font-size: 26px;
   }
 
   .board-heading__meta span,
@@ -2326,8 +2294,8 @@ select:focus-visible {
   }
 
   .squad-layout {
-    grid-template-columns: minmax(0, 1fr) 128px;
-    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 112px;
+    gap: 6px;
   }
 
   .operator-grid {
@@ -2335,7 +2303,7 @@ select:focus-visible {
   }
 
   .operator-slot {
-    aspect-ratio: 0.92;
+    aspect-ratio: 1.08;
   }
 
   .operator-card__class {
@@ -2358,22 +2326,22 @@ select:focus-visible {
 
   .draw-rail {
     grid-template-rows: auto minmax(0, 1fr);
-    gap: 6px;
+    gap: 4px;
   }
 
   .draw-rail__pool {
-    padding: 6px 9px;
+    padding: 4px 7px;
     border-top-width: 3px;
   }
 
   .draw-rail__pool strong {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .draw-button {
     min-height: 0;
     gap: 4px;
-    padding: 12px 14px;
+    padding: 9px 11px;
   }
 
   .draw-button::after {
@@ -2381,19 +2349,19 @@ select:focus-visible {
   }
 
   .draw-button svg {
-    width: 32px;
+    width: 27px;
   }
 
   .draw-button__label span {
-    font-size: 23px;
+    font-size: 20px;
   }
 
   .status-strip {
-    min-height: 28px;
-    gap: 7px;
-    margin-top: 6px;
-    padding: 4px 9px;
-    font-size: 9px;
+    min-height: 24px;
+    gap: 5px;
+    margin-top: 4px;
+    padding: 3px 7px;
+    font-size: 8px;
   }
 
   .status-strip i {

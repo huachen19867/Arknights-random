@@ -63,6 +63,7 @@ export function App() {
   const [results, setResults] = useState<DrawResult[]>([])
   const [drawing, setDrawing] = useState(false)
   const [notice, setNotice] = useState('')
+  const [showOrientationHint, setShowOrientationHint] = useState(false)
   const drawTimer = useRef<number | undefined>(undefined)
 
   const effective = useMemo(() => getEffectiveDrawConfig(settings), [settings])
@@ -97,6 +98,28 @@ export function App() {
     },
     [],
   )
+
+  useEffect(() => {
+    const portraitPhone = window.matchMedia('(max-width: 760px) and (orientation: portrait)')
+    let hintTimer: number | undefined
+
+    const updateHint = () => {
+      if (hintTimer !== undefined) window.clearTimeout(hintTimer)
+      if (!portraitPhone.matches) {
+        setShowOrientationHint(false)
+        return
+      }
+      setShowOrientationHint(true)
+      hintTimer = window.setTimeout(() => setShowOrientationHint(false), 2200)
+    }
+
+    updateHint()
+    portraitPhone.addEventListener('change', updateHint)
+    return () => {
+      portraitPhone.removeEventListener('change', updateHint)
+      if (hintTimer !== undefined) window.clearTimeout(hintTimer)
+    }
+  }, [])
 
   const navigate = (target: AppPage) => {
     window.location.hash = target === 'draw' ? '#/' : `#/${target}`
@@ -161,25 +184,19 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <section
-        className="orientation-gate"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="orientation-gate-title"
-        aria-describedby="orientation-gate-description"
-      >
-        <div className="orientation-gate__signal" aria-hidden="true">
-          <span className="orientation-gate__phone"></span>
-          <span className="orientation-gate__arc"></span>
-        </div>
-        <span className="orientation-gate__eyebrow">DISPLAY ORIENTATION / 90°</span>
-        <h1 id="orientation-gate-title">请旋转手机</h1>
-        <p id="orientation-gate-description">横屏后将自动进入罗德岛随机编队终端</p>
-        <div className="orientation-gate__status">
-          <i></i>
-          <span>等待设备横置</span>
-        </div>
-      </section>
+      {showOrientationHint && (
+        <section className="orientation-hint" role="status" aria-live="polite">
+          <div className="orientation-hint__signal" aria-hidden="true">
+            <span className="orientation-hint__phone"></span>
+            <span className="orientation-hint__arc"></span>
+          </div>
+          <div>
+            <span className="orientation-hint__eyebrow">DISPLAY ORIENTATION / 90°</span>
+            <h1>建议横屏浏览</h1>
+            <p>横置手机可获得更完整的编队界面</p>
+          </div>
+        </section>
+      )}
       <AppHeader
         page={page}
         onNavigate={navigate}
