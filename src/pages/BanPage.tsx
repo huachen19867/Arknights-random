@@ -41,6 +41,13 @@ export function BanPage({ operators, settings, onChange, onBack }: BanPageProps)
     })
   }
 
+  const addFiltered = () => {
+    const addedIds = filtered.filter((operator) => !bannedSet.has(operator.id)).map((operator) => operator.id)
+    if (addedIds.length === 0) return
+
+    onChange({ ...settings, bannedIds: [...settings.bannedIds, ...addedIds] })
+  }
+
   return (
     <main className="panel-page ban-page" data-screen-label="Ban 干员">
       <section className="ban-panel">
@@ -93,6 +100,9 @@ export function BanPage({ operators, settings, onChange, onBack }: BanPageProps)
             </select>
           </label>
           <div className="ban-actions">
+            <button type="button" className="ban-select-button" onClick={addFiltered} disabled={!filtered.some((item) => !bannedSet.has(item.id))}>
+              全选当前筛选
+            </button>
             <button type="button" onClick={clearFiltered} disabled={!filtered.some((item) => bannedSet.has(item.id))}>
               清除当前筛选
             </button>
@@ -109,7 +119,7 @@ export function BanPage({ operators, settings, onChange, onBack }: BanPageProps)
 
         <div className="ban-results-meta">
           <span>RESULT / {filtered.length}</span>
-          <p>点击卡片即可加入或移出 Ban 名单。</p>
+          <p>可点击卡片逐个调整，或全选当前筛选结果加入 Ban 名单。</p>
         </div>
 
         {filtered.length > 0 ? (
