@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T14:17:35.455Z",
+  "generatedAt": "2026-08-02T00:59:29.247Z",
   "source": {
     "kind": "lark-base"
   },
-  "count": 423,
+  "count": 427,
   "operators": [
     {
       "id": "A41",
@@ -6672,6 +6672,32 @@
       ]
     },
     {
+      "id": "R102",
+      "name": "予愿安洁莉娜",
+      "rarity": 6,
+      "profession": "特种",
+      "enabled": true,
+      "portrait": "https://media.prts.wiki/thumb/d/db/%E7%AB%8B%E7%BB%98_%E4%BA%88%E6%84%BF%E5%AE%89%E6%B4%81%E8%8E%89%E5%A8%9C_1.png/800px-%E7%AB%8B%E7%BB%98_%E4%BA%88%E6%84%BF%E5%AE%89%E6%B4%81%E8%8E%89%E5%A8%9C_1.png?image_process=format,webp/quality,Q_80",
+      "portraitKind": "elite0",
+      "sourceUrl": "https://prts.wiki/w/%E4%BA%88%E6%84%BF%E5%AE%89%E6%B4%81%E8%8E%89%E5%A8%9C",
+      "updatedAt": "2026-08-02T00:57:56.000Z",
+      "skills": [
+        {
+          "index": 1,
+          "name": "极速送达"
+        },
+        {
+          "index": 2,
+          "name": "重力自定义"
+        },
+        {
+          "index": 3,
+          "name": "酸橙的心事"
+        }
+      ],
+      "modules": []
+    },
+    {
       "id": "R104",
       "name": "末药",
       "rarity": 4,
@@ -8740,6 +8766,100 @@
           "name": "“随身保险杠”",
           "code": "CRA-X",
           "sourceUrl": "https://prts.wiki/w/%E9%98%BF%E5%85%B0%E5%A8%9C#模组"
+        }
+      ]
+    },
+    {
+      "id": "RB19",
+      "name": "珊比",
+      "rarity": 6,
+      "profession": "重装",
+      "enabled": true,
+      "portrait": "https://media.prts.wiki/thumb/4/46/%E7%AB%8B%E7%BB%98_%E7%8F%8A%E6%AF%94_1.png/800px-%E7%AB%8B%E7%BB%98_%E7%8F%8A%E6%AF%94_1.png?image_process=format,webp/quality,Q_80",
+      "portraitKind": "elite0",
+      "sourceUrl": "https://prts.wiki/w/%E7%8F%8A%E6%AF%94",
+      "updatedAt": "2026-08-02T00:57:56.000Z",
+      "skills": [
+        {
+          "index": 1,
+          "name": "“还不走？”"
+        },
+        {
+          "index": 2,
+          "name": "“慢慢走~”"
+        },
+        {
+          "index": 3,
+          "name": "“不准走！”"
+        }
+      ],
+      "modules": [
+        {
+          "id": "RB19:PRP-X",
+          "index": 1,
+          "name": "出发的勇气",
+          "code": "PRP-X",
+          "sourceUrl": "https://prts.wiki/w/%E7%8F%8A%E6%AF%94#模组"
+        }
+      ]
+    },
+    {
+      "id": "RB20",
+      "name": "嘉辛塔",
+      "rarity": 5,
+      "profession": "先锋",
+      "enabled": true,
+      "portrait": "https://media.prts.wiki/thumb/d/d2/%E7%AB%8B%E7%BB%98_%E5%98%89%E8%BE%9B%E5%A1%94_1.png/800px-%E7%AB%8B%E7%BB%98_%E5%98%89%E8%BE%9B%E5%A1%94_1.png?image_process=format,webp/quality,Q_80",
+      "portraitKind": "elite0",
+      "sourceUrl": "https://prts.wiki/w/%E5%98%89%E8%BE%9B%E5%A1%94",
+      "updatedAt": "2026-08-02T00:57:56.000Z",
+      "skills": [
+        {
+          "index": 1,
+          "name": "支援号令·γ型"
+        },
+        {
+          "index": 2,
+          "name": "伞下乘荫"
+        }
+      ],
+      "modules": [
+        {
+          "id": "RB20:BEA-X",
+          "index": 1,
+          "name": "弹射起步",
+          "code": "BEA-X",
+          "sourceUrl": "https://prts.wiki/w/%E5%98%89%E8%BE%9B%E5%A1%94#模组"
+        }
+      ]
+    },
+    {
+      "id": "RB21",
+      "name": "时隙",
+      "rarity": 5,
+      "profession": "术师",
+      "enabled": true,
+      "portrait": "https://media.prts.wiki/thumb/d/d3/%E7%AB%8B%E7%BB%98_%E6%97%B6%E9%9A%99_1.png/800px-%E7%AB%8B%E7%BB%98_%E6%97%B6%E9%9A%99_1.png?image_process=format,webp/quality,Q_80",
+      "portraitKind": "elite0",
+      "sourceUrl": "https://prts.wiki/w/%E6%97%B6%E9%9A%99",
+      "updatedAt": "2026-08-02T00:57:56.000Z",
+      "skills": [
+        {
+          "index": 1,
+          "name": "攻击力强化·γ型"
+        },
+        {
+          "index": 2,
+          "name": "科技与传统仪式"
+        }
+      ],
+      "modules": [
+        {
+          "id": "RB21:FUN-X",
+          "index": 1,
+          "name": "突发性创造思维",
+          "code": "FUN-X",
+          "sourceUrl": "https://prts.wiki/w/%E6%97%B6%E9%9A%99#模组"
         }
       ]
     },

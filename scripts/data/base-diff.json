@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-01T14:16:53.641Z",
+  "generatedAt": "2026-08-02T00:59:22.476Z",
   "input": "scripts/data/prts-operators.json",
-  "existingCount": 423,
+  "existingCount": 427,
   "missingCount": 0,
   "differentCount": 0,
   "updateExisting": false,

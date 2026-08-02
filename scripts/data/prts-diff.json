@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-01T14:04:30.176Z",
+  "generatedAt": "2026-08-02T00:59:08.153Z",
   "output": "scripts/data/prts-operators.json",
   "options": {
     "allowRemovals": false,
@@ -11,15 +11,15 @@
     "migratePortraitsElite0": false
   },
   "portraitResolution": {
-    "reused": 419,
+    "reused": 423,
     "checked": 4
   },
   "skillResolution": {
-    "reused": 423,
+    "reused": 427,
     "fetched": 0
   },
   "moduleResolution": {
-    "reused": 423,
+    "reused": 427,
     "fetched": 0
   },
   "migratedPortraitCount": 0,
@@ -35,7 +35,7 @@
   },
   "validation": {
     "ok": true,
-    "count": 423,
+    "count": 427,
     "errors": [],
     "warnings": [],
     "rarityCounts": {
@@ -43,42 +43,42 @@
       "2": 5,
       "3": 17,
       "4": 61,
-      "5": 195,
-      "6": 134
+      "5": 197,
+      "6": 136
     },
     "professionCounts": {
-      "先锋": 41,
+      "先锋": 42,
       "近卫": 84,
-      "重装": 47,
+      "重装": 48,
       "狙击": 58,
-      "术师": 59,
+      "术师": 60,
       "医疗": 39,
       "辅助": 47,
-      "特种": 48
+      "特种": 49
     },
     "portraitCounts": {
-      "elite0": 421,
+      "elite0": 425,
       "elite2": 2
     },
     "skillCounts": {
       "0": 16,
       "1": 17,
-      "2": 255,
-      "3": 135,
+      "2": 257,
+      "3": 137,
       "unknown": 0
     },
     "moduleCounts": {
-      "0": 43,
-      "1": 285,
+      "0": 44,
+      "1": 288,
       "2": 80,
       "3": 15,
       "unknown": 0
     }
   },
   "transitionErrors": [],
-  "previousCount": 423,
-  "nextCount": 423,
-  "unchangedCount": 423,
+  "previousCount": 427,
+  "nextCount": 427,
+  "unchangedCount": 427,
   "additionCount": 0,
   "removalCount": 0,
   "changeCount": 0,
