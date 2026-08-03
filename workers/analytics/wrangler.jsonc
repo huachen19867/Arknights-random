@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "arknights-analytics",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "dd11eebc-ccdf-4133-9dd8-ad3e6cb68906",
       "migrations_dir": "migrations"
     }
   ],
