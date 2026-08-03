@@ -2451,13 +2451,13 @@ select:focus-visible {
   }
 
   .ban-card__state {
-    gap: 3px;
-    padding: 3px 5px;
-    font-size: 7px;
+    gap: 1.5px;
+    padding: 1.5px 2.5px;
+    font-size: 3.5px;
   }
 
   .ban-card__state svg {
-    width: 10px;
+    width: 5px;
   }
 }
 
