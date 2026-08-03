@@ -16,6 +16,11 @@ export const SESSION_IDLE_MS = 30 * 60 * 1000
 export const ANALYTICS_ROUTES = ['draw', 'ban', 'settings'] as const
 export type AnalyticsRoute = (typeof ANALYTICS_ROUTES)[number]
 
+/** 抽卡事件独立端点：从页面埋点端点推导 /v1/draw，避免事件被页面 route 校验拒绝。 */
+export function resolveDrawEndpoint(endpoint: string): string {
+  return endpoint.replace(/\/v1\/page-view$/, '/v1/draw')
+}
+
 export interface AnalyticsPayload {
   eventId: string
   visitorId: string
@@ -222,7 +227,7 @@ export function createAnalyticsTracker(options: AnalyticsOptions, browser: Analy
       const visitorId = loadOrCreateVisitorId(browser)
       const session = loadOrCreateSession(browser, Date.now())
       const payload = buildDrawPayload(browser, visitorId, session.id, Date.now())
-      void sendDraw(options.endpoint, payload, browser)
+      void sendDraw(resolveDrawEndpoint(options.endpoint), payload, browser)
     },
   }
 }

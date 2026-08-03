@@ -5,6 +5,7 @@ import {
   createAnalyticsTracker,
   loadOrCreateSession,
   loadOrCreateVisitorId,
+  resolveDrawEndpoint,
   resolveReferrerHost,
   type AnalyticsBrowser,
 } from './analytics'
@@ -158,7 +159,9 @@ describe('analytics', () => {
     const browser = makeBrowser()
     trackerWith(browser).trackDraw()
     expect(browser.navigator.sendBeacon).toHaveBeenCalledTimes(1)
-    const blob = (browser.navigator.sendBeacon as ReturnType<typeof vi.fn>).mock.calls[0][1] as Blob
+    const beacon = browser.navigator.sendBeacon as ReturnType<typeof vi.fn>
+    expect(beacon.mock.calls[0][0]).toBe('https://analytics.example.test/v1/draw')
+    const blob = beacon.mock.calls[0][1] as Blob
     const payload = JSON.parse(await blob.text())
     expect(payload.eventId).toMatch(/^[0-9a-f-]{36}$/)
     expect(payload.visitorId).toMatch(/^[0-9a-f-]{36}$/)
@@ -184,6 +187,13 @@ describe('analytics', () => {
     })
     trackerWith(browser).trackDraw()
     expect(browser.fetch).toHaveBeenCalledTimes(1)
+    const [url] = (browser.fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('https://analytics.example.test/v1/draw')
+  })
+
+  it('resolveDrawEndpoint 把 /v1/page-view 替换为 /v1/draw，其他端点保持不变', () => {
+    expect(resolveDrawEndpoint('https://a.test/v1/page-view')).toBe('https://a.test/v1/draw')
+    expect(resolveDrawEndpoint('https://a.test/v1/draw')).toBe('https://a.test/v1/draw')
   })
 
   it('resolveReferrerHost 只保留 hostname', () => {
