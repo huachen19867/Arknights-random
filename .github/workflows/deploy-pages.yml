@@ -37,6 +37,8 @@ jobs:
         run: npm test
 
       - name: Build site
+        env:
+          VITE_ANALYTICS_ENDPOINT: ${{ vars.VITE_ANALYTICS_ENDPOINT }}
         run: npm run build -- --base=/${{ github.event.repository.name }}/
 
       - name: Configure GitHub Pages

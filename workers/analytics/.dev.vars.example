@@ -1,0 +1,7 @@
+# 本地开发/测试用的变量（.gitignore 已排除，禁止提交）。
+# 生产部署用 `npx wrangler secret put` 注入同名 secret，会覆盖这里的同名 var。
+# 测试值只用于本地运行 `npm run analytics:test`，不代表生产密钥。
+ANALYTICS_HASH_SALT=local-test-salt-change-me-0123456789abcdef
+FEISHU_APP_ID=cli_xxxxxxxxxxxx
+FEISHU_APP_SECRET=local-test-secret
+ALLOWED_ORIGIN=http://localhost:5173,https://huachen19867.github.io

@@ -27,18 +27,29 @@
     "data:base:modules:init:yes": "node scripts/base-init-modules.mjs --yes",
     "data:base:modules:preview": "node scripts/base-upsert.mjs --update-modules",
     "data:base:modules:write": "node scripts/base-upsert.mjs --update-modules --write",
-    "data:base:modules:update": "node scripts/base-upsert.mjs --update-modules --update-module-existing --write"
+    "data:base:modules:update": "node scripts/base-upsert.mjs --update-modules --update-module-existing --write",
+    "analytics:dev": "wrangler dev --config workers/analytics/wrangler.jsonc",
+    "analytics:test": "vitest run --config workers/analytics/vitest.config.ts",
+    "analytics:typecheck": "tsc -p workers/analytics/tsconfig.json",
+    "analytics:deploy": "wrangler deploy --config workers/analytics/wrangler.jsonc"
   },
   "dependencies": {
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.20.1",
+    "@cloudflare/workers-types": "^5.20260801.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
     "typescript": "7.0.2",
     "vite": "8.2.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "^4.118.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260730.1": true
   }
 }
