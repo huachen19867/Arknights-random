@@ -2449,6 +2449,16 @@ select:focus-visible {
   .ban-results-meta {
     padding: 6px 0;
   }
+
+  .ban-card__state {
+    gap: 3px;
+    padding: 3px 5px;
+    font-size: 7px;
+  }
+
+  .ban-card__state svg {
+    width: 10px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
