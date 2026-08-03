@@ -2409,6 +2409,46 @@ select:focus-visible {
   .panel-titlebar h1 {
     font-size: 28px;
   }
+
+  .ban-grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+    max-height: none;
+  }
+
+  .ban-toolbar {
+    grid-template-columns: minmax(120px, 1fr) 92px 92px;
+    grid-template-rows: auto auto;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .search-field {
+    grid-column: auto;
+    height: 32px;
+    gap: 6px;
+    padding: 0 9px;
+  }
+
+  .select-field select {
+    height: 26px;
+  }
+
+  .ban-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .ban-actions button {
+    min-height: 28px;
+    flex: 1;
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
+  .ban-results-meta {
+    padding: 6px 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
