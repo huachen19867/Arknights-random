@@ -140,6 +140,11 @@ npm.cmd run build -- --base=/arknights-random/
 
 数据 URL 通过 `import.meta.env.BASE_URL` 解析，不依赖站点根路径。
 
+
+## 访问统计
+
+生产构建且配置 `VITE_ANALYTICS_ENDPOINT` 时，网页会向 Cloudflare Worker 匿名上报页面路由 PV（draw / ban / settings）。上报内容仅含匿名散列、设备类别与来源归类，不采集抽取结果、设置、Ban 名单、搜索词或完整 IP / User-Agent / referrer，并尊重浏览器的 Do Not Track。Worker 原始事件保留 90 天后自动清理，每 15 分钟聚合成日汇总写入飞书 Base「访问统计」表，仪表盘「网站访问概览」展示今日与累计 PV / 访问次数 / UV、每日趋势、页面 / 设备 / 来源分布。统计链路任何环节失败都静默降级，不影响抽取、筛选或页面渲染。
+
 ## 已知边界
 
 当前快照中的立绘是 PRTS 媒体 CDN 的 HTTPS URL（精零 800px WebP，少数原图宽度不足的干员用 PNG 原图），不是随 `dist/` 打包的本地图片。因此断开网络后仍可加载快照、筛选和抽取，但未缓存的立绘会显示文字占位。若项目需要完全离线发布，下一阶段应增加图片下载、校验和本地路径改写流程。

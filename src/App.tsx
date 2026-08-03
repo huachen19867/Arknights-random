@@ -9,6 +9,7 @@ import {
   professionSlotStats,
 } from './lib/operators'
 import { getEffectiveDrawConfig, loadSettings, saveSettings } from './lib/settings'
+import { trackPageView } from './lib/analytics'
 import { BanPage } from './pages/BanPage'
 import { DrawPage } from './pages/DrawPage'
 import { PortraitSamplePage } from './pages/PortraitSamplePage'
@@ -80,6 +81,10 @@ export function App() {
   )
 
   useEffect(() => saveSettings(settings, window.localStorage), [settings])
+
+  useEffect(() => {
+    trackPageView(page)
+  }, [page])
 
   useEffect(() => {
     const onHashChange = () => setPage(pageFromHash())
@@ -230,6 +235,7 @@ export function App() {
       )}
       <footer className="legal-note">
         非官方、非商业粉丝工具。游戏素材与角色权利归原权利方所有；干员资料来源于 PRTS Wiki。
+        本站仅记录匿名访问次数与设备类别，不记录抽取设置、结果或个人身份信息。
       </footer>
     </div>
   )

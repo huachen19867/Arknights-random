@@ -13,3 +13,6 @@ scripts/.tmp/
 .DS_Store
 Thumbs.db
 docs/
+workers/analytics/.dev.vars
+workers/analytics/.dev.vars.*
+!workers/analytics/.dev.vars.example

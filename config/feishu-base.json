@@ -30,5 +30,11 @@
     "enabled": "启用",
     "sourceUrl": "来源URL",
     "syncedAt": "同步时间"
+  },
+  "analytics": {
+    "tableName": "访问统计",
+    "tableId": "tblMdFWzrk5SkjJR",
+    "dashboardName": "网站访问概览",
+    "dashboardId": "blk4NZ8YO9v7mSzx"
   }
 }
