@@ -2,16 +2,20 @@ import { env } from 'cloudflare:test'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   COLLECTION_VERSION,
+  DRAW_WATERMARK_KEY,
   LOCK_KEY,
   WATERMARK_KEY,
   acquireLock,
   addDays,
   cleanup,
+  collectDayDrawMetrics,
   collectDayMetrics,
   dayToEpochMs,
+  drawRowToFields,
   releaseLock,
   rowToFields,
   runAggregation,
+  type DrawMetricRow,
   type MetricRow,
 } from '../src/aggregate'
 import { dayCn } from '../src/collect'
@@ -23,7 +27,7 @@ import type { AnalyticsEnv } from '../src/index'
 // 避免用例间数据互相污染（同文件共享同一 worker/数据库）。
 afterEach(async () => {
   await env.DB.exec(
-    'DELETE FROM events; DELETE FROM rate_buckets; DELETE FROM base_record_map; DELETE FROM sync_state;',
+    'DELETE FROM events; DELETE FROM draw_events; DELETE FROM rate_buckets; DELETE FROM base_record_map; DELETE FROM draw_record_map; DELETE FROM sync_state;',
   )
 })
 
@@ -69,6 +73,24 @@ async function insertEvent(overrides: Partial<Record<string, string | number>> =
     .run()
 }
 
+async function insertDrawEvent(overrides: Partial<Record<string, string | number>> = {}) {
+  const event = {
+    event_id: overrides.event_id ?? `draw_${Math.random().toString(36).slice(2, 10)}`,
+    received_at: overrides.received_at ?? new Date().toISOString(),
+    day_cn: overrides.day_cn ?? '2026-08-01',
+    visitor_hash: overrides.visitor_hash ?? 'v1'.repeat(32),
+    session_hash: overrides.session_hash ?? 's1'.repeat(32),
+    device: overrides.device ?? 'desktop',
+    source: overrides.source ?? '直接访问',
+  }
+  await env.DB.prepare(
+    `INSERT INTO draw_events (event_id, received_at, day_cn, visitor_hash, session_hash, device, source)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+  )
+    .bind(event.event_id, event.received_at, event.day_cn, event.visitor_hash, event.session_hash, event.device, event.source)
+    .run()
+}
+
 function aggregateEnv(): AnalyticsEnv {
   return { ...(env as unknown as AnalyticsEnv), TIME_ZONE } as AnalyticsEnv
 }
@@ -76,6 +98,13 @@ function aggregateEnv(): AnalyticsEnv {
 async function watermark(): Promise<string | null> {
   const row = await env.DB.prepare('SELECT state_value FROM sync_state WHERE state_key = ?1')
     .bind(WATERMARK_KEY)
+    .first<{ state_value: string }>()
+  return row?.state_value ?? null
+}
+
+async function drawWatermark(): Promise<string | null> {
+  const row = await env.DB.prepare('SELECT state_value FROM sync_state WHERE state_key = ?1')
+    .bind(DRAW_WATERMARK_KEY)
     .first<{ state_value: string }>()
   return row?.state_value ?? null
 }
@@ -135,6 +164,48 @@ describe('aggregate metrics', () => {
     expect(fields['数据状态']).toBe('已封账')
     expect(fields['同步时间']).toBe(1785680100000)
     expect(fields['采集版本']).toBe(COLLECTION_VERSION)
+  })
+
+  it('抽卡聚合按总览 / 设备 / 来源分组，只统计有事件的维度值', async () => {
+    const day = '2026-08-02'
+    await insertDrawEvent({ day_cn: day, device: 'desktop', source: '直接访问' })
+    await insertDrawEvent({ day_cn: day, device: 'desktop', source: 'GitHub' })
+    await insertDrawEvent({ day_cn: day, device: 'mobile', source: 'GitHub' })
+
+    const rows = await collectDayDrawMetrics(env.DB, day, day)
+    expect(rows).toHaveLength(5) // 总览 + 2 设备 + 2 来源
+
+    const overview = rows.find((row) => row.key === `${day}|总览|全部`)!
+    expect(overview.draws).toBe(3)
+    expect(overview.status).toBe('当日滚动')
+    expect(rows.find((row) => row.key === `${day}|设备|desktop`)!.draws).toBe(2)
+    expect(rows.find((row) => row.key === `${day}|设备|mobile`)!.draws).toBe(1)
+    expect(rows.find((row) => row.key === `${day}|来源|直接访问`)!.draws).toBe(1)
+    expect(rows.find((row) => row.key === `${day}|来源|GitHub`)!.draws).toBe(2)
+  })
+
+  it('无抽卡事件的日期返回空数组', async () => {
+    expect(await collectDayDrawMetrics(env.DB, '2026-01-01', '2026-01-01')).toEqual([])
+  })
+
+  it('drawRowToFields 输出抽卡统计的飞书字段形状', () => {
+    const row: DrawMetricRow = {
+      key: '2026-08-02|总览|全部',
+      date: '2026-08-02',
+      dimension: '总览',
+      value: '全部',
+      draws: 42,
+      status: '当日滚动',
+    }
+    const fields = drawRowToFields(row, 1785680100000)
+    expect(fields['唯一键']).toBe('2026-08-02|总览|全部')
+    expect(fields['日期']).toBe(dayToEpochMs('2026-08-02'))
+    expect(fields['统计维度']).toBe('总览')
+    expect(fields['抽卡次数']).toBe(42)
+    expect(fields['数据状态']).toBe('当日滚动')
+    expect(fields['同步时间']).toBe(1785680100000)
+    expect(fields['采集版本']).toBe(COLLECTION_VERSION)
+    expect(fields['PV']).toBeUndefined()
   })
 })
 
@@ -268,5 +339,60 @@ describe('runAggregation', () => {
     expect(events.results).toHaveLength(1)
     const buckets = await env.DB.prepare('SELECT bucket_key FROM rate_buckets').all<{ bucket_key: string }>()
     expect(buckets.results.map((row) => row.bucket_key).sort()).toEqual(['fresh-bucket'])
+  })
+
+  it('抽卡统计：创建过去日期行并写入 draw_record_map，水位独立推进', async () => {
+    const day = addDays(dayCn(new Date(), TIME_ZONE), -2)
+    await insertDrawEvent({ day_cn: day })
+    await insertDrawEvent({ day_cn: day, device: 'mobile', source: 'GitHub' })
+    const fake = makeFakeFeishu()
+
+    const result = await runAggregation(aggregateEnv(), fake.client)
+    expect(result.status).toBe('done')
+    expect(result.drawSyncedDays).toEqual([day])
+    expect(result.syncedDays).toEqual([])
+
+    const overview = fake.calls.create.find((item) => item.fields['唯一键'] === `${day}|总览|全部`)
+    expect(overview).toBeDefined()
+    expect(overview!.fields['抽卡次数']).toBe(2)
+    expect(overview!.fields['数据状态']).toBe('已封账')
+
+    const drawMapCount = await env.DB.prepare('SELECT COUNT(*) AS count FROM draw_record_map').first<{ count: number }>()
+    expect(drawMapCount?.count).toBe(5) // 总览 + 2 设备 + 2 来源
+    const pageMapCount = await env.DB.prepare('SELECT COUNT(*) AS count FROM base_record_map').first<{ count: number }>()
+    expect(pageMapCount?.count).toBe(0)
+
+    expect(await drawWatermark()).toBe(dayCn(new Date(), TIME_ZONE))
+    expect(await watermark()).toBeNull()
+  })
+
+  it('抽卡统计今日滚动行可重复更新；同一唯一键不重复创建', async () => {
+    const today = dayCn(new Date(), TIME_ZONE)
+    await insertDrawEvent({ day_cn: today })
+    const fake = makeFakeFeishu()
+
+    await runAggregation(aggregateEnv(), fake.client)
+    const firstCreateCount = fake.calls.create.length
+    expect(firstCreateCount).toBe(3) // 单事件日：总览 + 设备 + 来源各 1 行
+    const overview = fake.calls.create.find((item) => item.fields['唯一键'] === `${today}|总览|全部`)
+    expect(overview!.fields['数据状态']).toBe('当日滚动')
+
+    await insertDrawEvent({ day_cn: today, device: 'desktop', source: '直接访问' })
+    await runAggregation(aggregateEnv(), fake.client)
+    expect(fake.calls.create.length).toBe(firstCreateCount)
+    expect(fake.calls.update.length).toBeGreaterThan(0)
+    const updatedOverview = fake.calls.update.find((item) => item.key === `${today}|总览|全部`)
+    expect(updatedOverview).toBeDefined()
+    expect(updatedOverview!.fields['抽卡次数']).toBe(2)
+  })
+
+  it('抽卡统计与访问统计互相独立：只插抽卡事件不影响访问统计水位', async () => {
+    const today = dayCn(new Date(), TIME_ZONE)
+    await insertDrawEvent({ day_cn: today })
+    const fake = makeFakeFeishu()
+
+    await runAggregation(aggregateEnv(), fake.client)
+    expect(await drawWatermark()).toBe(today)
+    expect(await watermark()).toBeNull()
   })
 })

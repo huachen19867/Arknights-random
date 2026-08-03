@@ -14,7 +14,7 @@ import {
 // 避免用例间数据互相污染（同文件共享同一 worker/数据库）。
 afterEach(async () => {
   await env.DB.exec(
-    'DELETE FROM events; DELETE FROM rate_buckets; DELETE FROM base_record_map; DELETE FROM sync_state;',
+    'DELETE FROM events; DELETE FROM draw_events; DELETE FROM rate_buckets; DELETE FROM base_record_map; DELETE FROM draw_record_map; DELETE FROM sync_state;',
   )
 })
 
@@ -42,6 +42,30 @@ async function post(body: unknown, headers: Record<string, string> = {}) {
 
 async function eventCount(): Promise<number> {
   const row = await env.DB.prepare('SELECT COUNT(*) AS count FROM events').first<{ count: number }>()
+  return row?.count ?? 0
+}
+
+function drawPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    eventId: '33333333-3333-4333-8333-333333333333',
+    visitorId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    sessionId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    clientTime: '2026-08-03T00:00:00.000Z',
+    referrerHost: 'github.com',
+    ...overrides,
+  }
+}
+
+async function postDraw(body: unknown, headers: Record<string, string> = {}) {
+  return SELF.fetch('https://analytics.test/v1/draw', {
+    method: 'POST',
+    headers: { Origin: ORIGIN, 'Content-Type': 'text/plain;charset=UTF-8', ...headers },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  })
+}
+
+async function drawEventCount(): Promise<number> {
+  const row = await env.DB.prepare('SELECT COUNT(*) AS count FROM draw_events').first<{ count: number }>()
   return row?.count ?? 0
 }
 
@@ -143,6 +167,61 @@ describe('collect http', () => {
     const response = await post(payload(), { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' })
     expect(response.status).toBe(204)
     expect(await eventCount()).toBe(0)
+  })
+
+  it('合法抽卡事件返回 204 并写入 draw_events，载荷不要求 route', async () => {
+    const response = await postDraw(drawPayload())
+    expect(response.status).toBe(204)
+    expect(await drawEventCount()).toBe(1)
+    const row = await env.DB.prepare('SELECT * FROM draw_events').first<Record<string, unknown>>()
+    expect(row?.day_cn).toBe(dayCn(new Date(), 'Asia/Shanghai'))
+  })
+
+  it('相同抽卡 eventId 连续提交两次，draw_events 只有一条', async () => {
+    await postDraw(drawPayload())
+    await postDraw(drawPayload())
+    expect(await drawEventCount()).toBe(1)
+  })
+
+  it('非法抽卡 payload 返回 400，不写入', async () => {
+    expect((await postDraw(drawPayload({ eventId: 'bad' }))).status).toBe(400)
+    expect((await postDraw(drawPayload({ visitorId: '' }))).status).toBe(400)
+    expect((await postDraw(drawPayload({ sessionId: 'x'.repeat(65) }))).status).toBe(400)
+    expect((await postDraw(drawPayload({ clientTime: 'not-a-date' }))).status).toBe(400)
+    expect(await drawEventCount()).toBe(0)
+  })
+
+  it('抽卡事件机器人 UA 不计数', async () => {
+    const response = await postDraw(drawPayload(), { 'User-Agent': 'Mozilla/5.0 (compatible; bingbot/2.0)' })
+    expect(response.status).toBe(204)
+    expect(await drawEventCount()).toBe(0)
+  })
+
+  it('抽卡事件与页面事件共享限流桶', async () => {
+    for (let i = 0; i < RATE_LIMIT_PER_WINDOW; i += 1) {
+      const response = await post(payload({ eventId: `11111111-1111-4111-8111-${String(i).padStart(12, '0')}` }))
+      expect(response.status).toBe(204)
+    }
+    const blocked = await postDraw(drawPayload())
+    expect(blocked.status).toBe(429)
+    expect(await drawEventCount()).toBe(0)
+  })
+
+  it('draw_events 不保存原始 IP、完整 UA、完整 referrer', async () => {
+    await postDraw(drawPayload({ referrerHost: 'github.com' }), {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0',
+      'CF-Connecting-IP': '203.0.113.7',
+    })
+    const rows = await env.DB.prepare('SELECT * FROM draw_events').all<Record<string, unknown>>()
+    expect(rows.results).toHaveLength(1)
+    const row = rows.results[0]
+    expect(Object.values(row).join('|')).not.toContain('203.0.113.7')
+    expect(Object.values(row).join('|')).not.toContain('Chrome/120.0')
+    expect(Object.values(row).join('|')).not.toContain('github.com')
+    expect(String(row.visitor_hash)).toMatch(/^[0-9a-f]{64}$/)
+    expect(String(row.session_hash)).toMatch(/^[0-9a-f]{64}$/)
+    expect(row.device).toBe('desktop')
+    expect(row.source).toBe('GitHub')
   })
 
   it('限流达到阈值后返回 429', async () => {

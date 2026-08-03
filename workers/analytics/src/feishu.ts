@@ -45,14 +45,14 @@ export class FeishuError extends Error {
 
 interface AnalyticsEnvLike {
   FEISHU_BASE_TOKEN: string
-  FEISHU_STATS_TABLE_ID: string
   FEISHU_APP_ID: string
   FEISHU_APP_SECRET: string
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export function createFeishuClient(env: AnalyticsEnvLike): FeishuClient {
+/** 按表 ID 创建写入客户端：访问统计与抽卡次数统计各用一个实例。 */
+export function createFeishuClient(env: AnalyticsEnvLike, tableId: string): FeishuClient {
   let tokenPromise: Promise<string> | null = null
 
   async function tenantAccessToken(): Promise<string> {
@@ -116,7 +116,7 @@ export function createFeishuClient(env: AnalyticsEnvLike): FeishuClient {
       for (let offset = 0; offset < items.length; offset += BATCH_LIMIT) {
         const batch = items.slice(offset, offset + BATCH_LIMIT)
         const data = (await request(
-          `/bitable/v1/apps/${env.FEISHU_BASE_TOKEN}/tables/${env.FEISHU_STATS_TABLE_ID}/records/batch_create`,
+          `/bitable/v1/apps/${env.FEISHU_BASE_TOKEN}/tables/${tableId}/records/batch_create`,
           { records: batch.map((item) => ({ fields: item.fields })) },
         )) as { data?: { records?: Array<{ record_id?: string; fields?: Record<string, unknown> }> } }
         const records = data?.data?.records ?? []
@@ -144,7 +144,7 @@ export function createFeishuClient(env: AnalyticsEnvLike): FeishuClient {
       for (let offset = 0; offset < items.length; offset += BATCH_LIMIT) {
         const batch = items.slice(offset, offset + BATCH_LIMIT)
         await request(
-          `/bitable/v1/apps/${env.FEISHU_BASE_TOKEN}/tables/${env.FEISHU_STATS_TABLE_ID}/records/batch_update`,
+          `/bitable/v1/apps/${env.FEISHU_BASE_TOKEN}/tables/${tableId}/records/batch_update`,
           { records: batch.map((item) => ({ record_id: item.recordId, fields: item.fields })) },
         )
       }

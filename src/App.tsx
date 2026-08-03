@@ -9,7 +9,7 @@ import {
   professionSlotStats,
 } from './lib/operators'
 import { getEffectiveDrawConfig, loadSettings, saveSettings } from './lib/settings'
-import { trackPageView } from './lib/analytics'
+import { trackDraw, trackPageView } from './lib/analytics'
 import { BanPage } from './pages/BanPage'
 import { DrawPage } from './pages/DrawPage'
 import { PortraitSamplePage } from './pages/PortraitSamplePage'
@@ -143,6 +143,7 @@ export function App() {
         const selected = drawOperatorResultsByProfessionSlots(operators, settings)
         setResults(selected)
         setDrawing(true)
+        trackDraw()
         const stats = professionSlotStats(operators, settings)
         const parts = [`已满足 ${stats.satisfiable} / ${stats.total} 个职业名额。`]
         for (const shortage of stats.shortages) {
@@ -174,6 +175,7 @@ export function App() {
       )
       setResults(selected)
       setDrawing(true)
+      trackDraw()
       const drawNotice =
         candidates.length < settings.count
           ? `候选池仅有 ${candidates.length} 人，已展示全部候选，不会重复抽取。`

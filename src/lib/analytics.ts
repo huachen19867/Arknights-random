@@ -1,10 +1,11 @@
 /**
- * 匿名访问统计埋点（页面路由 PV / 30 分钟会话 / 当日匿名浏览器 UV）。
+ * 匿名访问统计埋点（页面路由 PV / 30 分钟会话 / 当日匿名浏览器 UV / 抽卡次数）。
  *
  * 只在生产构建且配置 VITE_ANALYTICS_ENDPOINT 时上报，尊重 Do Not Track。
  * 严格只发送交接文档允许的字段：eventId、visitorId、sessionId、route、
- * clientTime（仅诊断）、referrerHost（仅 hostname）。不采集抽取结果、设置、
- * Ban 名单、搜索词、完整 IP、完整 User-Agent 或完整 referrer。
+ * clientTime（仅诊断）、referrerHost（仅 hostname）。抽卡事件只报告“完成了一次
+ * 抽取”这个动作，不采集抽取结果、设置、Ban 名单、搜索词、完整 IP、
+ * 完整 User-Agent 或完整 referrer。
  * 上报失败一律静默，绝不影响抽取、筛选或页面渲染。
  */
 
@@ -20,6 +21,15 @@ export interface AnalyticsPayload {
   visitorId: string
   sessionId: string
   route: AnalyticsRoute
+  clientTime: string
+  referrerHost: string
+}
+
+/** 抽卡事件载荷：只含匿名身份与时间，不携带任何抽取结果。 */
+export interface DrawPayload {
+  eventId: string
+  visitorId: string
+  sessionId: string
   clientTime: string
   referrerHost: string
 }
@@ -136,13 +146,23 @@ export function buildPayload(
   }
 }
 
-/** 优先 sendBeacon，失败降级 fetch(keepalive)；所有错误吞掉，不产生未处理 rejection。 */
-export async function sendPageView(
-  endpoint: string,
-  payload: AnalyticsPayload,
+export function buildDrawPayload(
   browser: AnalyticsBrowser,
-): Promise<void> {
-  const body = JSON.stringify(payload)
+  visitorId: string,
+  sessionId: string,
+  now: number,
+): DrawPayload {
+  return {
+    eventId: randomUuid(browser.crypto),
+    visitorId,
+    sessionId,
+    clientTime: new Date(now).toISOString(),
+    referrerHost: resolveReferrerHost(browser.document.referrer),
+  }
+}
+
+/** 优先 sendBeacon，失败降级 fetch(keepalive)；所有错误吞掉，不产生未处理 rejection。 */
+async function sendEvent(endpoint: string, body: string, browser: AnalyticsBrowser): Promise<void> {
   try {
     const blob = new Blob([body], { type: 'text/plain;charset=UTF-8' })
     if (typeof browser.navigator.sendBeacon === 'function' && browser.navigator.sendBeacon(endpoint, blob)) {
@@ -164,8 +184,25 @@ export async function sendPageView(
   }
 }
 
+export async function sendPageView(
+  endpoint: string,
+  payload: AnalyticsPayload,
+  browser: AnalyticsBrowser,
+): Promise<void> {
+  await sendEvent(endpoint, JSON.stringify(payload), browser)
+}
+
+export async function sendDraw(
+  endpoint: string,
+  payload: DrawPayload,
+  browser: AnalyticsBrowser,
+): Promise<void> {
+  await sendEvent(endpoint, JSON.stringify(payload), browser)
+}
+
 export interface AnalyticsTracker {
   trackPageView: (route: string) => void
+  trackDraw: () => void
 }
 
 export function createAnalyticsTracker(options: AnalyticsOptions, browser: AnalyticsBrowser): AnalyticsTracker {
@@ -179,6 +216,13 @@ export function createAnalyticsTracker(options: AnalyticsOptions, browser: Analy
       const session = loadOrCreateSession(browser, Date.now())
       const payload = buildPayload(browser, visitorId, session.id, route as AnalyticsRoute, Date.now())
       void sendPageView(options.endpoint, payload, browser)
+    },
+    trackDraw() {
+      if (!enabled || doNotTrack) return
+      const visitorId = loadOrCreateVisitorId(browser)
+      const session = loadOrCreateSession(browser, Date.now())
+      const payload = buildDrawPayload(browser, visitorId, session.id, Date.now())
+      void sendDraw(options.endpoint, payload, browser)
     },
   }
 }
@@ -217,4 +261,10 @@ function defaultBrowser(): AnalyticsBrowser {
 export function trackPageView(route: string): void {
   const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT ?? ''
   createAnalyticsTracker({ endpoint, prod: import.meta.env.PROD }, defaultBrowser()).trackPageView(route)
+}
+
+/** 应用接入点：完成一次抽取后调用；只在生产构建且配置端点时上报。 */
+export function trackDraw(): void {
+  const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT ?? ''
+  createAnalyticsTracker({ endpoint, prod: import.meta.env.PROD }, defaultBrowser()).trackDraw()
 }

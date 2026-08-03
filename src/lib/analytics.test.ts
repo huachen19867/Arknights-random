@@ -154,6 +154,38 @@ describe('analytics', () => {
     expect(browser.navigator.sendBeacon).toHaveBeenCalledTimes(1)
   })
 
+  it('trackDraw 发送一次，载荷只含匿名身份与时间，不携带 route 或业务内容', async () => {
+    const browser = makeBrowser()
+    trackerWith(browser).trackDraw()
+    expect(browser.navigator.sendBeacon).toHaveBeenCalledTimes(1)
+    const blob = (browser.navigator.sendBeacon as ReturnType<typeof vi.fn>).mock.calls[0][1] as Blob
+    const payload = JSON.parse(await blob.text())
+    expect(payload.eventId).toMatch(/^[0-9a-f-]{36}$/)
+    expect(payload.visitorId).toMatch(/^[0-9a-f-]{36}$/)
+    expect(payload.sessionId).toMatch(/^[0-9a-f-]{36}$/)
+    expect(payload.clientTime).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+    expect(payload.referrerHost).toBe('')
+    expect(payload.route).toBeUndefined()
+  })
+
+  it('trackDraw 尊重 DNT 与非生产构建', () => {
+    const dntBrowser = makeBrowser({ navigator: { sendBeacon: vi.fn(() => true), doNotTrack: '1' } })
+    trackerWith(dntBrowser).trackDraw()
+    expect(dntBrowser.navigator.sendBeacon).not.toHaveBeenCalled()
+
+    const devBrowser = makeBrowser()
+    trackerWith(devBrowser, false).trackDraw()
+    expect(devBrowser.navigator.sendBeacon).not.toHaveBeenCalled()
+  })
+
+  it('trackDraw 的 sendBeacon 失败时降级 fetch', () => {
+    const browser = makeBrowser({
+      navigator: { sendBeacon: vi.fn(() => false), doNotTrack: undefined },
+    })
+    trackerWith(browser).trackDraw()
+    expect(browser.fetch).toHaveBeenCalledTimes(1)
+  })
+
   it('resolveReferrerHost 只保留 hostname', () => {
     expect(resolveReferrerHost('https://Bing.com/search?q=x')).toBe('bing.com')
     expect(resolveReferrerHost('')).toBe('')

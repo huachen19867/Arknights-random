@@ -34,6 +34,8 @@
   "analytics": {
     "tableName": "访问统计",
     "tableId": "tblMdFWzrk5SkjJR",
+    "drawTableName": "抽卡次数统计",
+    "drawTableId": "tblNpdw7ZVtXZNf7",
     "dashboardName": "网站访问概览",
     "dashboardId": "blk4NZ8YO9v7mSzx"
   }

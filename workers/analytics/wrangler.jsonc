@@ -24,6 +24,7 @@
     "ALLOWED_ORIGIN": "https://huachen19867.github.io",
     "TIME_ZONE": "Asia/Shanghai",
     "FEISHU_BASE_TOKEN": "AamibXOoha1bVmssWOQcTsSBncg",
-    "FEISHU_STATS_TABLE_ID": "tblMdFWzrk5SkjJR"
+    "FEISHU_STATS_TABLE_ID": "tblMdFWzrk5SkjJR",
+    "FEISHU_DRAW_TABLE_ID": "tblNpdw7ZVtXZNf7"
   }
 }

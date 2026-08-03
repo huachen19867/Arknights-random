@@ -21,27 +21,39 @@ const HOSTNAME_RE =
 const BOT_UA_RE =
   /(googlebot|bingbot|duckduckbot|baiduspider|yandexbot|sogou|exabot|semrushbot|ahrefsbot|mj12bot|dotbot|twitterbot|facebookexternalhit|slurp|petalbot|bytespider|applebot|gptbot|ccbot|anthropic-ai|claudebot|perplexitybot)/i
 
-export interface PageViewPayload {
+/** 两类事件共有的匿名身份字段（不包含任何业务内容）。 */
+export interface EventIdentity {
   eventId: string
   visitorId: string
   sessionId: string
-  route: Route
   /** 客户端时间，仅诊断，不参与正式日统计。 */
   clientTime?: string
   /** 只保留 hostname；空字符串表示直接访问。 */
   referrerHost?: string
 }
 
-export interface StoredEvent {
+export interface PageViewPayload extends EventIdentity {
+  route: Route
+}
+
+/** 抽卡事件载荷：只报告“完成了一次抽取”这个动作。 */
+export type DrawPayload = EventIdentity
+
+export interface StoredEventBase {
   eventId: string
   receivedAt: string
   dayCn: string
-  route: Route
   visitorHash: string
   sessionHash: string
   device: Device
   source: Source
 }
+
+export interface StoredEvent extends StoredEventBase {
+  route: Route
+}
+
+export interface StoredDrawEvent extends StoredEventBase {}
 
 /** 用 UA 粗分设备类别，随后丢弃原始 UA。 */
 export function classifyDevice(userAgent: string): Device {
@@ -90,6 +102,30 @@ export function isBotUserAgent(userAgent: string): boolean {
 export function validatePayload(
   raw: unknown,
 ): { ok: true; payload: PageViewPayload } | { ok: false; reason: string } {
+  const common = validateCommon(raw)
+  if (!common.ok) return common
+  const route = common.payload.route
+  if (typeof route !== 'string' || !(ALLOWED_ROUTES as readonly string[]).includes(route)) {
+    return { ok: false, reason: 'invalid route' }
+  }
+  return {
+    ok: true,
+    payload: { ...common.payload, route: route as Route },
+  }
+}
+
+export function validateDrawPayload(
+  raw: unknown,
+): { ok: true; payload: DrawPayload } | { ok: false; reason: string } {
+  const common = validateCommon(raw)
+  if (!common.ok) return common
+  return { ok: true, payload: common.payload }
+}
+
+/** 页面与抽卡事件共用的身份字段校验。 */
+function validateCommon(
+  raw: unknown,
+): { ok: true; payload: EventIdentity & { route?: unknown } } | { ok: false; reason: string } {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
     return { ok: false, reason: 'payload must be a JSON object' }
   }
@@ -107,11 +143,6 @@ export function validatePayload(
   if (typeof sessionId !== 'string' || !ID_RE.test(sessionId)) {
     return { ok: false, reason: 'invalid sessionId' }
   }
-  const route = obj.route
-  if (typeof route !== 'string' || !(ALLOWED_ROUTES as readonly string[]).includes(route)) {
-    return { ok: false, reason: 'invalid route' }
-  }
-
   let clientTime: string | undefined
   if (obj.clientTime !== undefined) {
     if (typeof obj.clientTime !== 'string' || obj.clientTime.length > 64) {
@@ -133,7 +164,7 @@ export function validatePayload(
 
   return {
     ok: true,
-    payload: { eventId, visitorId, sessionId, route: route as Route, clientTime, referrerHost },
+    payload: { eventId, visitorId, sessionId, clientTime, referrerHost, route: obj.route },
   }
 }
 
@@ -213,6 +244,27 @@ export async function insertEvent(db: D1Database, event: StoredEvent): Promise<b
   return result.meta.changes > 0
 }
 
+/** INSERT OR IGNORE：相同 eventId 重试不重复计数。 */
+export async function insertDrawEvent(db: D1Database, event: StoredDrawEvent): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `INSERT OR IGNORE INTO draw_events
+       (event_id, received_at, day_cn, visitor_hash, session_hash, device, source)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+    )
+    .bind(
+      event.eventId,
+      event.receivedAt,
+      event.dayCn,
+      event.visitorHash,
+      event.sessionHash,
+      event.device,
+      event.source,
+    )
+    .run()
+  return result.meta.changes > 0
+}
+
 /** collect 需要的环境字段；与 AnalyticsEnv 结构兼容。 */
 export interface CollectEnv {
   DB: D1Database
@@ -245,10 +297,24 @@ function jsonError(status: number, code: string, message: string, headers: Recor
 }
 
 /**
- * POST /v1/page-view 处理链：CORS → 大小 → JSON → 校验 → 机器人过滤 → 匿名散列 →
+ * 两类事件共用的采集处理链：CORS → 大小 → JSON → 校验 → 机器人过滤 → 匿名散列 →
  * 限流 → INSERT OR IGNORE。采集写 D1 成功后才返回 204；飞书同步绝不在请求路径执行。
  */
-export async function handleCollect(request: Request, env: CollectEnv): Promise<Response> {
+export async function handleEventRequest<P extends EventIdentity, T extends StoredEventBase>(
+  request: Request,
+  env: CollectEnv,
+  validate: (raw: unknown) => { ok: true; payload: P } | { ok: false; reason: string },
+  buildEvent: (
+    payload: P,
+    receivedAt: Date,
+    day: string,
+    visitorHash: string,
+    sessionHash: string,
+    device: Device,
+    source: Source,
+  ) => T,
+  insert: (db: D1Database, event: T) => Promise<boolean>,
+): Promise<Response> {
   if (request.method === 'OPTIONS') {
     const origin = request.headers.get('Origin')
     const allowed = origin !== null && isAllowedOrigin(origin, env.ALLOWED_ORIGIN)
@@ -275,7 +341,7 @@ export async function handleCollect(request: Request, env: CollectEnv): Promise<
     return jsonError(400, 'invalid_json', 'body must be valid JSON', corsHeaders(request, origin !== null))
   }
 
-  const validated = validatePayload(raw)
+  const validated = validate(raw)
   if (!validated.ok) {
     return jsonError(400, 'invalid_payload', validated.reason, corsHeaders(request, origin !== null))
   }
@@ -307,24 +373,62 @@ export async function handleCollect(request: Request, env: CollectEnv): Promise<
     return jsonError(429, 'rate_limited', 'too many requests', corsHeaders(request, origin !== null))
   }
 
-  const event: StoredEvent = {
-    eventId: validated.payload.eventId,
-    receivedAt: receivedAt.toISOString(),
-    dayCn: day,
-    route: validated.payload.route,
+  const event = buildEvent(
+    validated.payload,
+    receivedAt,
+    day,
     visitorHash,
     sessionHash,
-    device: classifyDevice(userAgent),
-    source: classifySource(validated.payload.referrerHost),
-  }
+    classifyDevice(userAgent),
+    classifySource(validated.payload.referrerHost),
+  )
   try {
-    await insertEvent(env.DB, event)
+    await insert(env.DB, event)
   } catch (error) {
     // D1 写入失败：本次事件可能丢失，返回 503；前端静默，不影响网站。
     console.error('d1 insert failed', error instanceof Error ? error.message : String(error))
     return jsonError(503, 'd1_error', 'failed to store event', corsHeaders(request, origin !== null))
   }
   return new Response(null, { status: 204, headers: { ...noStore(), ...corsHeaders(request, origin !== null) } })
+}
+
+/** POST /v1/page-view：页面路由 PV 事件。 */
+export async function handleCollect(request: Request, env: CollectEnv): Promise<Response> {
+  return handleEventRequest(
+    request,
+    env,
+    validatePayload,
+    (payload, receivedAt, day, visitorHash, sessionHash, device, source) => ({
+      eventId: payload.eventId,
+      receivedAt: receivedAt.toISOString(),
+      dayCn: day,
+      route: payload.route,
+      visitorHash,
+      sessionHash,
+      device,
+      source,
+    }),
+    insertEvent,
+  )
+}
+
+/** POST /v1/draw：完成一次抽取的匿名计数事件。 */
+export async function handleDrawCollect(request: Request, env: CollectEnv): Promise<Response> {
+  return handleEventRequest(
+    request,
+    env,
+    validateDrawPayload,
+    (payload, receivedAt, day, visitorHash, sessionHash, device, source) => ({
+      eventId: payload.eventId,
+      receivedAt: receivedAt.toISOString(),
+      dayCn: day,
+      visitorHash,
+      sessionHash,
+      device,
+      source,
+    }),
+    insertDrawEvent,
+  )
 }
 
 export function isAllowedOrigin(origin: string, allowedOrigins: string): boolean {
