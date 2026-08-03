@@ -18,7 +18,7 @@ export function AppHeader({ page, onNavigate, bannedCount }: AppHeaderProps) {
         </span>
         <span>
           <strong>RHODES / RANDOM</strong>
-          <small>罗德岛随机编队终端</small>
+          <small>军团办公室</small>
         </span>
       </button>
 
