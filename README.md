@@ -8,7 +8,12 @@
 
 2026-08-02 已验证 427 名启用干员、427 个唯一 ID、0 个空立绘 URL、0 个未知技能或模组数据。战斗技能数量分布为 0 / 1 / 2 / 3 个技能分别 16 / 17 / 257 / 137 名；夜刀等低星干员的 `skills: []` 表示 PRTS 已确认没有战斗技能，不是漏抓。正式立绘已统一迁移为精零（`_1.png`，425 名）；阿米娅(医疗)/(近卫) 因 PRTS 无精零立绘文件登记为精二例外（见 config/portrait-exceptions.json）。模组数据已采集：无模组 44 名、1 个 288 名、2 个 80 名、3 个 15 名，unknown 0。同日经 PRTS 发现并人工确认后，将予愿安洁莉娜、珊比、嘉辛塔、时隙四名新干员写入飞书 Base 并重新导出快照（423 → 427）。数据自检 62 项、前端测试 38 项和子路径生产构建均通过。桌面 1440 × 900、1366 × 768，以及手机 390 × 844 竖屏短提示和 844 × 320 矮横屏主界面、设置页、Ban 页均已实际检查。
 
-在线地址：<https://huachen19867.github.io/Arknights-random/> 。仓库推送到 `main` 后会由 GitHub Actions 自动复跑数据校验、前端测试和子路径构建，并部署到 GitHub Pages。
+在线地址：
+
+- Cloudflare Pages 主站：<https://arknights-random-5jk.pages.dev/>
+- GitHub Pages 备用站：<https://huachen19867.github.io/Arknights-random/>
+
+仓库推送到 `main` 后会由 GitHub Actions 自动复跑数据校验、前端测试和子路径构建，并部署到 GitHub Pages；Cloudflare Pages 当前采用本地生产构建直传。
 
 ## 界面截图
 
