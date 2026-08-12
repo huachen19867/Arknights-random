@@ -450,10 +450,13 @@ async function main() {
       staleAssets.push({ from: entry.name, to: path.basename(stalePath) });
     }
     report.quarantinedStaleAssets = staleAssets;
-    const pathById = new Map(manifestItems.map((item) => [item.operatorId, item.path]));
+    const manifestById = new Map(manifestItems.map((item) => [item.operatorId, item]));
     const localOperators = dataset.operators.map((operator) => ({
       ...operator,
-      portrait: pathById.get(operator.id),
+      portrait: manifestById.get(operator.id)?.sourceUrl ?? manifestById.get(operator.id)?.path,
+      ...(manifestById.get(operator.id)?.sourceUrl
+        ? { portraitFallback: manifestById.get(operator.id)?.path }
+        : {}),
     }));
     const localDataset = createDataset(localOperators, {
       generatedAt: dataset.generatedAt ?? startedAt,

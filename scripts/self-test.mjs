@@ -185,6 +185,14 @@ const valid = createDataset([{
   updatedAt: '2026-08-01T00:00:00.000Z',
 }]);
 assert.equal(validateDataset(valid).ok, true);
+assert.equal(validateDataset(createDataset([{
+  ...valid.operators[0],
+  portraitFallback: 'assets/operators/R303.webp',
+}])).ok, true);
+assert.equal(validateDataset(createDataset([{
+  ...valid.operators[0],
+  portraitFallback: 'https://example.com/not-local.webp',
+}])).ok, false);
 assert.equal(validateDataset(createDataset([{ ...valid.operators[0], portraitKind: 'elite2' }]), {
   strictPortraitKinds: ['elite2'],
 }).ok, false);
@@ -354,4 +362,4 @@ assert.throws(() => recordsToOperators([{
   },
 }]), /技能编号不连续/);
 
-console.log('self-test: 77 assertions passed');
+console.log('self-test: 79 assertions passed');

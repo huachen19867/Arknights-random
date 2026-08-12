@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "startedAt": "2026-08-12T14:01:21.422Z",
-  "completedAt": "2026-08-12T14:01:24.426Z",
+  "startedAt": "2026-08-12T14:32:53.455Z",
+  "completedAt": "2026-08-12T14:32:56.845Z",
   "ok": true,
   "expectedCount": 427,
   "baseEnabledCount": 427,
@@ -13,18 +13,5 @@
   "missingFromBase": [],
   "unexpectedInBase": [],
   "retainedRemovedAssets": [],
-  "quarantinedStaleAssets": [
-    {
-      "from": "R001%3A%E5%8C%BB%E7%96%97.webp",
-      "to": "R001%3A%E5%8C%BB%E7%96%97.webp.stale"
-    },
-    {
-      "from": "R001%3A%E6%9C%AF%E5%B8%88.webp",
-      "to": "R001%3A%E6%9C%AF%E5%B8%88.webp.stale"
-    },
-    {
-      "from": "R001%3A%E8%BF%91%E5%8D%AB.webp",
-      "to": "R001%3A%E8%BF%91%E5%8D%AB.webp.stale"
-    }
-  ]
+  "quarantinedStaleAssets": []
 }

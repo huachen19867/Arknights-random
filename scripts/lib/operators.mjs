@@ -413,6 +413,7 @@ const VERSIONED_OPERATOR_FIELDS = Object.freeze([
   'rarity',
   'profession',
   'portrait',
+  'portraitFallback',
   'portraitKind',
   'sourceUrl',
   'skills',
@@ -582,6 +583,13 @@ export function validateDataset(dataset, options = {}) {
       || (!/^https:\/\//.test(operator.portrait) && !/^assets\/operators\/[A-Za-z0-9._%~-]+\.(?:webp|png|jpe?g)$/.test(operator.portrait))
     ) {
       errors.push(`${label}.portrait 不是 HTTPS URL 或安全的本站立绘路径`);
+    }
+    if (
+      operator.portraitFallback !== undefined
+      && (typeof operator.portraitFallback !== 'string'
+        || !/^assets\/operators\/[A-Za-z0-9._%~-]+\.(?:webp|png|jpe?g)$/.test(operator.portraitFallback))
+    ) {
+      errors.push(`${label}.portraitFallback 不是安全的本站立绘路径`);
     }
     if (typeof operator.sourceUrl !== 'string' || !/^https:\/\//.test(operator.sourceUrl)) {
       errors.push(`${label}.sourceUrl 不是 HTTPS URL`);

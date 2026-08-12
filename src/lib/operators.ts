@@ -44,7 +44,8 @@ export function isOperator(value: unknown): value is Operator {
     RARITIES.includes(candidate.rarity as (typeof RARITIES)[number]) &&
     PROFESSIONS.includes(candidate.profession as (typeof PROFESSIONS)[number]) &&
     (candidate.enabled === undefined || typeof candidate.enabled === 'boolean') &&
-    (candidate.portrait === undefined || typeof candidate.portrait === 'string')
+    (candidate.portrait === undefined || typeof candidate.portrait === 'string') &&
+    (candidate.portraitFallback === undefined || typeof candidate.portraitFallback === 'string')
   )
 }
 
