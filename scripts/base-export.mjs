@@ -11,6 +11,7 @@ import {
   inferPortraitKind,
   larkDateTimeToIso,
   parseArgs,
+  readDataset,
   readPortraitExceptions,
   unwrapCellValue,
   unwrapUrlCellValue,
@@ -218,6 +219,27 @@ async function main() {
     portraitKindExceptions,
   });
   if (!report.ok) throw new Error(`Base 导出校验失败:\n- ${report.errors.join('\n- ')}`);
+  const previous = await readDataset(output).catch((error) => {
+    if (error?.code === 'ENOENT') return undefined;
+    throw error;
+  });
+  if (previous) {
+    const previousById = new Map(previous.operators.map((operator) => [operator.id, operator]));
+    for (const operator of dataset.operators) {
+      const previousOperator = previousById.get(operator.id);
+      if (previousOperator && /^assets\/operators\//.test(previousOperator.portrait ?? '')) {
+        operator.portrait = previousOperator.portrait;
+      }
+    }
+  }
+  const finalReport = validateDataset(dataset, {
+    minimumCount: 1,
+    allowUnknownSkills: true,
+    allowUnknownModules: !moduleTableId,
+    strictPortraitKinds: ['elite2'],
+    portraitKindExceptions,
+  });
+  if (!finalReport.ok) throw new Error(`Base 导出最终校验失败:\n- ${finalReport.errors.join('\n- ')}`);
   await writeJsonAtomic(output, dataset);
   console.log(`[3/3] 已安全写入 ${output}`);
   console.log(`    导出 ${operators.length} 名，跳过空 ID ${skippedBlank} 条，跳过未启用 ${skippedDisabled} 条，模组子表 ${moduleCount} 行`);

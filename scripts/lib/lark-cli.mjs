@@ -185,6 +185,28 @@ export async function listAllRecords({ baseToken, tableId, fields, identity = 'u
   return records;
 }
 
+export async function downloadRecordAttachment({
+  baseToken,
+  tableId,
+  recordId: targetRecordId,
+  fileToken,
+  output,
+  identity = 'user',
+}) {
+  const relativeOutput = path.isAbsolute(output) ? path.relative(PROJECT_ROOT, output) : output;
+  return runLark([
+    'base', '+record-download-attachment',
+    '--base-token', baseToken,
+    '--table-id', tableId,
+    '--record-id', targetRecordId,
+    '--file-token', fileToken,
+    '--output', relativeOutput,
+    '--overwrite',
+    '--as', identity,
+    '--format', 'json',
+  ]);
+}
+
 export function normalizeRecordPage(envelope) {
   const data = envelope?.data;
   if (

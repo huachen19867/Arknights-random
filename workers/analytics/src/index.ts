@@ -10,7 +10,7 @@ import { handleCollect, handleDrawCollect } from './collect'
 
 export interface AnalyticsEnv {
   DB: D1Database
-  /** 允许的浏览器 Origin，逗号分隔；生产固定为 https://huachen19867.github.io */
+  /** 允许的浏览器 Origin，逗号分隔；生产包含 GitHub Pages 与 Cloudflare Pages 主站 */
   ALLOWED_ORIGIN: string
   /** 归日时区，固定 Asia/Shanghai */
   TIME_ZONE: string
