@@ -1,5 +1,6 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import type { DrawResult, Operator, OperatorModule, OperatorSkill, Profession } from '../types'
+import { nextPortraitSource } from '../lib/portraitSource'
 import { ProfessionIcon } from './ProfessionIcon'
 import { Stars } from './Stars'
 
@@ -34,8 +35,12 @@ export function OperatorCard({
   expectedProfession,
   shortage = false,
 }: OperatorCardProps) {
-  const [imageFailed, setImageFailed] = useState(false)
-  const hasPortrait = Boolean(operator?.portrait) && !imageFailed
+  const [imageSource, setImageSource] = useState(operator?.portrait)
+  const hasPortrait = Boolean(imageSource)
+
+  useEffect(() => {
+    setImageSource(operator?.portrait)
+  }, [operator?.id, operator?.portrait, operator?.portraitFallback])
 
   if (!operator) {
     if (expectedProfession) {
@@ -81,10 +86,17 @@ export function OperatorCard({
       <div className={`operator-card__portrait${hasPortrait ? '' : ' operator-card__portrait--fallback'}`}>
         {hasPortrait ? (
           <img
-            src={operator.portrait}
+            src={imageSource}
             alt=""
             style={{ transform: `scale(${portraitScale})` }}
-            onError={() => setImageFailed(true)}
+            onError={() => {
+              const failedSource = imageSource
+              setImageSource((currentSource) => (
+                currentSource === failedSource
+                  ? nextPortraitSource(failedSource, operator.portraitFallback)
+                  : currentSource
+              ))
+            }}
           />
         ) : (
           <span aria-hidden="true">{operator.name.slice(0, 1)}</span>

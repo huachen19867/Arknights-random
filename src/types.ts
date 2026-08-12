@@ -36,6 +36,8 @@ export interface Operator {
   profession: Profession
   enabled?: boolean
   portrait?: string
+  /** 本站静态立绘；远端主立绘失败时只回退一次。 */
+  portraitFallback?: string
   sourceUrl?: string
   updatedAt?: string
   skills?: OperatorSkill[]

@@ -227,8 +227,10 @@ async function main() {
     const previousById = new Map(previous.operators.map((operator) => [operator.id, operator]));
     for (const operator of dataset.operators) {
       const previousOperator = previousById.get(operator.id);
-      if (previousOperator && /^assets\/operators\//.test(previousOperator.portrait ?? '')) {
-        operator.portrait = previousOperator.portrait;
+      const previousLocalPath = previousOperator?.portraitFallback
+        ?? (/^assets\/operators\//.test(previousOperator?.portrait ?? '') ? previousOperator.portrait : undefined);
+      if (previousLocalPath) {
+        operator.portraitFallback = previousLocalPath;
       }
     }
   }

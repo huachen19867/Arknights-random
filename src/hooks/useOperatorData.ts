@@ -30,6 +30,7 @@ export function useOperatorData(): OperatorDataState {
         const operators = normalizeOperatorPayload(await response.json()).map((operator) => ({
           ...operator,
           portrait: resolveAssetUrl(import.meta.env.BASE_URL, operator.portrait),
+          portraitFallback: resolveAssetUrl(import.meta.env.BASE_URL, operator.portraitFallback),
         }))
         if (operators.length === 0) throw new Error('干员数据为空或格式无效')
         setState({ operators, source: 'feishu-export', loading: false })

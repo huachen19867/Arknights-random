@@ -28,4 +28,11 @@ describe('resolveAssetUrl', () => {
       .toBe('https://example.com/operator.webp')
     expect(resolveAssetUrl('/', undefined)).toBeUndefined()
   })
+
+  it('允许主立绘使用外链、备用立绘使用本站子路径', () => {
+    expect(resolveAssetUrl('/Arknights-random/', 'https://media.prts.wiki/operator.webp'))
+      .toBe('https://media.prts.wiki/operator.webp')
+    expect(resolveAssetUrl('/Arknights-random/', 'assets/operators/A41.webp'))
+      .toBe('/Arknights-random/assets/operators/A41.webp')
+  })
 })

@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-2026-08-12 已验证 427 名启用干员、427 个唯一 ID、0 个空立绘、0 个未知技能或模组数据。战斗技能数量分布为 0 / 1 / 2 / 3 个技能分别 16 / 17 / 257 / 137 名；夜刀等低星干员的 `skills: []` 表示 PRTS 已确认没有战斗技能，不是漏抓。正式立绘已统一迁移为精零（`_1.png`，425 名）；阿米娅(医疗)/(近卫) 因 PRTS 无精零立绘文件登记为精二例外（见 config/portrait-exceptions.json）。427 张立绘已经下载、验图并随站点发布（425 WebP、2 PNG，约 34 MiB），网页不再热链 PRTS；第二次同步实测 427 张全部增量复用。模组数据已采集：无模组 44 名、1 个 288 名、2 个 80 名、3 个 15 名，unknown 0。数据自检 77 项、前端测试 56 项、统计 Worker 测试 40 项和生产构建均通过。
+2026-08-12 已验证 427 名启用干员、427 个唯一 ID、0 个空立绘、0 个未知技能或模组数据。战斗技能数量分布为 0 / 1 / 2 / 3 个技能分别 16 / 17 / 257 / 137 名；夜刀等低星干员的 `skills: []` 表示 PRTS 已确认没有战斗技能，不是漏抓。正式立绘已统一迁移为精零（`_1.png`，425 名）；阿米娅(医疗)/(近卫) 因 PRTS 无精零立绘文件登记为精二例外（见 config/portrait-exceptions.json）。427 张立绘已经下载、验图并随站点发布（425 WebP、2 PNG，约 34 MiB）。为恢复更快的显示体验，网页优先读取飞书“立绘URL”中的 PRTS 优化图，外链失败时自动切换到对应本站立绘；第二次同步实测 427 张全部增量复用。模组数据已采集：无模组 44 名、1 个 288 名、2 个 80 名、3 个 15 名，unknown 0。数据自检 79 项、前端测试 60 项、统计 Worker 测试 40 项和生产构建均通过。
 
 在线地址：
 
@@ -90,7 +90,7 @@ npm.cmd test
 npm.cmd run build
 ```
 
-`data:base:publish` 依次执行 Base 导出与立绘同步。它只接纳 `启用 === true` 的记录，全空行会跳过，半填行、重复 ID、非法星级或未知职业会让命令非零退出；图片还会检查 HTTP、Content-Type、文件大小、魔数和像素尺寸。任一图片失败时不会发布新的快照或清单，也不会覆盖上一份可用文件。正式输出为 [public/data/operators.json](public/data/operators.json) 与 `public/assets/operators/manifest.json`，均是生成物，不要手工修改。
+`data:base:publish` 依次执行 Base 导出与立绘同步。它只接纳 `启用 === true` 的记录，全空行会跳过，半填行、重复 ID、非法星级或未知职业会让命令非零退出；图片还会检查 HTTP、Content-Type、文件大小、魔数和像素尺寸。任一图片失败时不会发布新的快照或清单，也不会覆盖上一份可用文件。快照同时保存远端主立绘 `portrait` 和本站备用立绘 `portraitFallback`；飞书附件人工覆盖没有远端地址时直接使用本站图。正式输出为 [public/data/operators.json](public/data/operators.json) 与 `public/assets/operators/manifest.json`，均是生成物，不要手工修改。
 
 ## PRTS 更新链路
 
@@ -134,7 +134,7 @@ PRTS 同步把上一版种子当作稳定 ID 登记表：已有干员继承旧 I
 - `scripts/data/prts-operators.json`：`data:prts` 生成的 PRTS 种子。
 - `scripts/data/prts-diff.json`：PRTS 新增、移除、字段变化和复用统计报告。
 - `scripts/data/base-diff.json`：Base 预览生成的差异报告。
-- `public/data/operators.json`：`data:base:export` 生成的网页正式快照。
+- `public/data/operators.json`：`data:base:publish` 生成的网页正式快照，包含远端主立绘与本站失败兜底路径。
 - `public/assets/operators/`：`portraits:sync` 生成的 427 张本站立绘与 `manifest.json` 校验清单。
 - `scripts/data/portrait-sync-report.json`：最近一次立绘同步的复用、下载、失败和隔离报告。
 - `dist/`：`build` 生成的部署产物。
