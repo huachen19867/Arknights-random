@@ -17,6 +17,7 @@ export const PROFESSIONS = Object.freeze([
 export const BASE_SKILL_FIELDS = Object.freeze(['技能1', '技能2', '技能3']);
 export const BASE_SKILL_VERIFIED_FIELD = '技能已核验';
 export const BASE_MODULE_VERIFIED_FIELD = '模组已核验';
+export const BASE_PORTRAIT_ATTACHMENT_FIELD = '立绘附件';
 export const MODULE_TABLE_NAME = '干员模组';
 export const MODULE_FIELDS = Object.freeze([
   '模组ID',
@@ -41,6 +42,7 @@ export const BASE_FIELDS = Object.freeze([
   ...BASE_SKILL_FIELDS,
   BASE_SKILL_VERIFIED_FIELD,
   BASE_MODULE_VERIFIED_FIELD,
+  BASE_PORTRAIT_ATTACHMENT_FIELD,
 ]);
 
 export function verifyModuleFieldSchema(fields) {
@@ -92,6 +94,7 @@ export function verifyBaseFieldSchema(fields) {
     '技能3': 'text',
     '技能已核验': 'checkbox',
     '模组已核验': 'checkbox',
+    '立绘附件': 'attachment',
   };
   for (const [name, expected] of Object.entries(expectedTypes)) {
     const actual = byName.get(name)?.type;
@@ -574,8 +577,11 @@ export function validateDataset(dataset, options = {}) {
     if (operator.enabled !== undefined && typeof operator.enabled !== 'boolean') {
       errors.push(`${label}.enabled 必须为 boolean`);
     }
-    if (typeof operator.portrait !== 'string' || !/^https:\/\//.test(operator.portrait)) {
-      errors.push(`${label}.portrait 不是 HTTPS URL`);
+    if (
+      typeof operator.portrait !== 'string'
+      || (!/^https:\/\//.test(operator.portrait) && !/^assets\/operators\/[A-Za-z0-9._%~-]+\.(?:webp|png|jpe?g)$/.test(operator.portrait))
+    ) {
+      errors.push(`${label}.portrait 不是 HTTPS URL 或安全的本站立绘路径`);
     }
     if (typeof operator.sourceUrl !== 'string' || !/^https:\/\//.test(operator.sourceUrl)) {
       errors.push(`${label}.sourceUrl 不是 HTTPS URL`);

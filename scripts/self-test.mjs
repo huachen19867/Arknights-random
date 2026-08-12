@@ -18,6 +18,13 @@ import {
 import { portraitCandidates } from './sync-prts.mjs';
 import { isRetryableLarkWriteLimit, LarkCliError, normalizeRecordPage } from './lib/lark-cli.mjs';
 import { mergeOperatorModules, recordsToOperators } from './base-export.mjs';
+import {
+  detectImageType,
+  extractAttachmentFiles,
+  imageDimensions,
+  safeOperatorFilename,
+  selectPortraitSource,
+} from './sync-portraits.mjs';
 
 const fixture = `
   <div id="filter-data">
@@ -62,6 +69,39 @@ assert.equal(portraits[1].url, 'https://media.prts.wiki/6/66/%E5%A4%B4%E5%83%8F_
 assert.equal(inferPortraitKind(portraits[0].url), 'elite0');
 assert.equal(inferPortraitKind(portraits[1].url), 'avatar');
 assert.equal(inferPortraitKind('https://media.prts.wiki/thumb/a/ad/x_2.png/800px-x_2.png'), 'elite2');
+assert.equal(safeOperatorFilename('A41'), 'A41.webp');
+assert.equal(safeOperatorFilename('R001:医疗'), 'id-UjAwMTrljLvnlpc.webp');
+assert.equal(safeOperatorFilename('R001:医疗', 'png'), 'id-UjAwMTrljLvnlpc.png');
+assert.throws(() => safeOperatorFilename('', 'webp'), /不能为空/);
+assert.equal(detectImageType(Buffer.from('524946460000000057454250', 'hex'))?.format, 'webp');
+assert.equal(detectImageType(Buffer.from('89504e470d0a1a0a00000000', 'hex'))?.format, 'png');
+assert.equal(detectImageType(Buffer.from('ffd8ff000000000000000000', 'hex'))?.format, 'jpeg');
+assert.equal(detectImageType(Buffer.from('not-an-image')), undefined);
+const webpDimensionsFixture = Buffer.alloc(30);
+webpDimensionsFixture.write('RIFF', 0, 'ascii');
+webpDimensionsFixture.write('WEBP', 8, 'ascii');
+webpDimensionsFixture.write('VP8X', 12, 'ascii');
+webpDimensionsFixture.writeUIntLE(799, 24, 3);
+webpDimensionsFixture.writeUIntLE(1199, 27, 3);
+assert.deepEqual(imageDimensions(webpDimensionsFixture, 'webp'), { width: 800, height: 1200 });
+const pngDimensionsFixture = Buffer.alloc(24);
+Buffer.from('89504e470d0a1a0a', 'hex').copy(pngDimensionsFixture);
+pngDimensionsFixture.writeUInt32BE(640, 16);
+pngDimensionsFixture.writeUInt32BE(960, 20);
+assert.deepEqual(imageDimensions(pngDimensionsFixture, 'png'), { width: 640, height: 960 });
+assert.deepEqual(extractAttachmentFiles([{ file_token: 'box_file', name: '立绘.png', size: 1234 }]), [
+  { fileToken: 'box_file', name: '立绘.png', size: 1234 },
+]);
+assert.equal(selectPortraitSource({ fields: {
+  '干员ID': 'R303',
+  '立绘附件': [{ file_token: 'box_override' }],
+  '立绘URL': 'https://example.com/fallback.webp',
+} }).kind, 'base-attachment');
+assert.equal(selectPortraitSource({ fields: {
+  '干员ID': 'R303',
+  '立绘URL': '[立绘](https://example.com/fallback.webp)',
+} }).sourceUrl, 'https://example.com/fallback.webp');
+assert.throws(() => selectPortraitSource({ fields: { '干员ID': 'R303' } }), /既没有立绘附件/);
 
 const oneModuleHtml = `
 <h2><span id="模组">模组</span></h2><section>
@@ -314,4 +354,4 @@ assert.throws(() => recordsToOperators([{
   },
 }]), /技能编号不连续/);
 
-console.log('self-test: 62 assertions passed');
+console.log('self-test: 77 assertions passed');

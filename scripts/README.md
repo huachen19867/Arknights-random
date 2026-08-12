@@ -28,7 +28,7 @@ node .\scripts\sync-prts.mjs --allow-removals --max-additions 80 --max-changes 8
 
 ## 2. Base 字段约定
 
-目标表必须存在以下中文字段：`干员ID`、`名称`、`星级`、`职业`、`启用`、`立绘URL`、`来源URL`、`同步时间`、`技能1`、`技能2`、`技能3`、`技能已核验`、`模组已核验`。前三个技能字段是普通文本，“技能已核验”和“模组已核验”是复选框；其余类型依次为文本、文本、数字、单选、复选框、超链接、超链接、日期时间。职业单选须预先建好八个选项。当前 Base 另有预留字段“立绘附件”，但导出器不会读取、下载或发布附件；人工立绘请使用无需鉴权的 HTTPS URL。
+目标表必须存在以下中文字段：`干员ID`、`名称`、`星级`、`职业`、`启用`、`立绘URL`、`来源URL`、`同步时间`、`技能1`、`技能2`、`技能3`、`技能已核验`、`模组已核验`、`立绘附件`。前三个技能字段是普通文本，“技能已核验”和“模组已核验”是复选框，“立绘附件”是附件；其余类型依次为文本、文本、数字、单选、复选框、超链接、超链接、日期时间。职业单选须预先建好八个选项。
 
 PowerShell 中设置环境变量：
 
@@ -102,6 +102,18 @@ node .\scripts\base-upsert.mjs --update-skills --write
 node .\scripts\base-export.mjs
 ```
 
-默认串行分页读取主表，再按表名“干员模组”找到子表并聚合模组，只导出“启用”复选框 CellValue 严格等于 `true` 的记录，校验后原子写入 `public/data/operators.json`。只有“技能已核验”也严格等于 `true` 时才输出 `skills`；三个技能都空且已核验会输出 `skills: []`，未核验则省略 `skills` 表示未知。技能必须从 1 开始连续填写。模组同理：只有“模组已核验”为 true 才输出 `modules`（子表有行则聚合，无行则 `modules: []`），未核验省略字段表示未知。导出器拒绝孤儿模组、重复模组 ID、未知干员和展示顺序不连续。全空行会跳过，任何已填但缺少必需字段的半填行会立即报错，避免把脏数据发布到前端。当前导出的 `portrait` 保持为 Base 中维护的 HTTPS URL；完全离线发布所需的图片本地化尚未实现。
+默认串行分页读取主表，再按表名“干员模组”找到子表并聚合模组，只导出“启用”复选框 CellValue 严格等于 `true` 的记录，校验后原子写入 `public/data/operators.json`。只有“技能已核验”也严格等于 `true` 时才输出 `skills`；三个技能都空且已核验会输出 `skills: []`，未核验则省略 `skills` 表示未知。技能必须从 1 开始连续填写。模组同理：只有“模组已核验”为 true 才输出 `modules`（子表有行则聚合，无行则 `modules: []`），未核验省略字段表示未知。导出器拒绝孤儿模组、重复模组 ID、未知干员和展示顺序不连续。全空行会跳过，任何已填但缺少必需字段的半填行会立即报错，避免把脏数据发布到前端。若旧快照已使用本站立绘路径，单独导出会先保留这些路径，避免短暂恢复热链；正式发布仍应运行 `npm.cmd run data:base:publish`。
+
+## 5. 立绘本地化发布
+
+```powershell
+npm.cmd run portraits:sync
+# 日常推荐一条命令完成 Base 导出 + 立绘同步：
+npm.cmd run data:base:publish
+```
+
+同步器串行分页读取 `干员ID / 名称 / 启用 / 立绘URL / 立绘附件`。每名启用干员最多允许一个附件；有附件时使用飞书 Base 专用附件命令下载，没有附件时从 HTTPS 立绘URL下载。文件必须通过大小、HTTP、Content-Type、WebP/PNG/JPEG 魔数和像素尺寸校验；写入采用临时文件与安全替换。输出为 `public/assets/operators/` 和 `manifest.json`，快照中的 `portrait` 改写为 `assets/operators/...` 相对路径，前端按 Vite `BASE_URL` 兼容根域名与 GitHub Pages 子路径。
+
+清单记录来源类型、来源指纹、SHA-256、字节数、格式、宽高和同步时间。来源指纹与文件哈希未变时直接复用；新增干员只下载新增项，附件替换会自动优先于 URL。任一项失败都会保留上一份正式快照和清单，Base 与快照启用 ID 不一致也会中止。旧文件不直接删除，而是改名为被 gitignore 排除的 `.stale`，同步报告写入 `scripts/data/portrait-sync-report.json` 供人工复核。
 
 三个 JSON 入口共用同一数据集形状：顶层包含 `schemaVersion`、`generatedAt`、`source`、`count`、`operators`；干员字段为 `id`、`name`、`rarity`、`profession`、`enabled`、`portrait`、`portraitKind`、`sourceUrl`、`updatedAt`、`skills`、`modules`。其中 `skills` 元素形如 `{ "index": 1, "name": "真银斩" }`，`modules` 元素形如 `{ "id": "R303:AFT-X", "index": 1, "name": "萨米的不灭心脏碎片", "code": "AFT-X", "sourceUrl": "https://prts.wiki/w/史尔特尔#模组" }`；对应字段未核验时可以省略，空数组表示已核验且确实没有。

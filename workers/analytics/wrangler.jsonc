@@ -21,7 +21,7 @@
     "crons": ["*/15 * * * *"]
   },
   "vars": {
-    "ALLOWED_ORIGIN": "https://huachen19867.github.io",
+    "ALLOWED_ORIGIN": "https://huachen19867.github.io,https://arknights-random-5jk.pages.dev",
     "TIME_ZONE": "Asia/Shanghai",
     "FEISHU_BASE_TOKEN": "AamibXOoha1bVmssWOQcTsSBncg",
     "FEISHU_STATS_TABLE_ID": "tblMdFWzrk5SkjJR",

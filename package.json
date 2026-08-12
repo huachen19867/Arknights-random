@@ -23,6 +23,8 @@
     "data:base:skills:write": "node scripts/base-upsert.mjs --update-skills --write",
     "data:base:write": "node scripts/base-upsert.mjs --write",
     "data:base:export": "node scripts/base-export.mjs",
+    "portraits:sync": "node scripts/sync-portraits.mjs",
+    "data:base:publish": "node scripts/base-export.mjs && node scripts/sync-portraits.mjs",
     "data:base:modules:init": "node scripts/base-init-modules.mjs",
     "data:base:modules:init:yes": "node scripts/base-init-modules.mjs --yes",
     "data:base:modules:preview": "node scripts/base-upsert.mjs --update-modules",

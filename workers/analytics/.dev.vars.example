@@ -4,4 +4,4 @@
 ANALYTICS_HASH_SALT=local-test-salt-change-me-0123456789abcdef
 FEISHU_APP_ID=cli_xxxxxxxxxxxx
 FEISHU_APP_SECRET=local-test-secret
-ALLOWED_ORIGIN=http://localhost:5173,https://huachen19867.github.io
+ALLOWED_ORIGIN=http://localhost:5173,https://huachen19867.github.io,https://arknights-random-5jk.pages.dev

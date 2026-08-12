@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fallbackOperators } from '../data/fallbackOperators'
-import { resolveOperatorsUrl } from '../lib/dataSource'
+import { resolveAssetUrl, resolveOperatorsUrl } from '../lib/dataSource'
 import { normalizeOperatorPayload } from '../lib/operators'
 import type { DataSource, Operator } from '../types'
 
@@ -27,7 +27,10 @@ export function useOperatorData(): OperatorDataState {
           signal: controller.signal,
         })
         if (!response.ok) throw new Error(`数据请求失败：${response.status}`)
-        const operators = normalizeOperatorPayload(await response.json())
+        const operators = normalizeOperatorPayload(await response.json()).map((operator) => ({
+          ...operator,
+          portrait: resolveAssetUrl(import.meta.env.BASE_URL, operator.portrait),
+        }))
         if (operators.length === 0) throw new Error('干员数据为空或格式无效')
         setState({ operators, source: 'feishu-export', loading: false })
       } catch (error) {

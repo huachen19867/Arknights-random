@@ -19,6 +19,7 @@ afterEach(async () => {
 })
 
 const ORIGIN = 'https://huachen19867.github.io'
+const CLOUDFLARE_ORIGIN = 'https://arknights-random-5jk.pages.dev'
 
 function payload(overrides: Record<string, unknown> = {}) {
   return {
@@ -128,6 +129,15 @@ describe('collect http', () => {
     expect(await eventCount()).toBe(1)
   })
 
+  it('Cloudflare Pages Origin 的页面事件和抽卡事件均返回 204', async () => {
+    const pageResponse = await post(payload(), { Origin: CLOUDFLARE_ORIGIN })
+    const drawResponse = await postDraw(drawPayload(), { Origin: CLOUDFLARE_ORIGIN })
+    expect(pageResponse.status).toBe(204)
+    expect(drawResponse.status).toBe(204)
+    expect(await eventCount()).toBe(1)
+    expect(await drawEventCount()).toBe(1)
+  })
+
   it('相同 eventId 连续提交两次，D1 只有一条', async () => {
     await post(payload())
     await post(payload())
@@ -149,6 +159,18 @@ describe('collect http', () => {
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(ORIGIN)
     expect(response.headers.get('Access-Control-Allow-Methods')).toContain('POST')
     expect(response.headers.get('Vary')).toContain('Origin')
+  })
+
+  it('Cloudflare Pages OPTIONS 在两个端点都返回对应 CORS Origin', async () => {
+    for (const pathname of ['/v1/page-view', '/v1/draw']) {
+      const response = await SELF.fetch(`https://analytics.test${pathname}`, {
+        method: 'OPTIONS',
+        headers: { Origin: CLOUDFLARE_ORIGIN, 'Access-Control-Request-Method': 'POST' },
+      })
+      expect(response.status).toBe(204)
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe(CLOUDFLARE_ORIGIN)
+      expect(response.headers.get('Vary')).toContain('Origin')
+    }
   })
 
   it('超过 1 KB 返回 413', async () => {
