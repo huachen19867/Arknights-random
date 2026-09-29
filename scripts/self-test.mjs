@@ -46,6 +46,11 @@ assert.deepEqual(parsePrtsSkills(`
   { index: 2, name: '测试技能' },
 ]);
 assert.deepEqual(parsePrtsSkills('<h2><span id="技能">技能</span></h2><p>该干员没有技能</p><h2>后勤技能</h2>'), []);
+assert.deepEqual(parsePrtsSkills(`
+  <h2 id="技能"><span id=".E6.8A.80.E8.83.BD"></span>技能</h2><section>
+  <p><b>技能1（精英0开放）</b></p><a href="/w/%E6%96%87%E4%BB%B6%3A%E6%8A%80%E8%83%BD_%E5%90%AF%E5%8A%A8%E7%8B%82%E5%AE%B4%E6%A8%A1%E5%BC%8F.png">图标</a>
+  </section><h2 id="后勤技能">后勤技能</h2>
+  <p><b>技能2（不应被作战技能解析）</b></p><a href="/w/%E6%96%87%E4%BB%B6%3A%E6%8A%80%E8%83%BD_%E9%94%99%E8%AF%AF.png">图标</a>`), [{ index: 1, name: '启动狂宴模式' }]);
 assert.throws(() => parsePrtsSkills('<h2><span id="后勤技能">后勤技能</span></h2>'), /缺少技能章节/);
 assert.throws(
   () => parsePrtsSkills('<h2><span id="技能">技能</span></h2><p>页面结构异常</p><h2>后勤技能</h2>'),
@@ -127,6 +132,9 @@ assert.deepEqual(parsePrtsModules(twoModulesHtml), [
   { index: 2, name: '旅游必需品', code: 'AFT-Y' },
 ]);
 assert.deepEqual(parsePrtsModules('<h2><span id="后勤技能">后勤技能</span></h2>'), []);
+assert.deepEqual(parsePrtsModules('<h2 id="模组"><span id=".E6.A8.A1.E7.BB.84"></span>模组</h2><h3>约定的证明</h3><div class="equiptemplate">约定的证明 BRK-X</div><h2 id="其他">其他</h2><h3>误入下一章</h3><div class="equiptemplate">错误测试 BAD-X</div>'), [
+  { index: 1, name: '约定的证明', code: 'BRK-X' },
+]);
 assert.deepEqual(parsePrtsModules(`
 <h2><span id="模组">模组</span></h2><section>
 <h3><span id="B0">阿米娅证章（近卫）</span></h3>

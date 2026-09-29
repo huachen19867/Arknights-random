@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { DrawResult, Operator, OperatorModule, OperatorSkill, Profession } from '../types'
 import { nextPortraitSource } from '../lib/portraitSource'
 import { ProfessionIcon } from './ProfessionIcon'
@@ -9,7 +9,7 @@ interface OperatorCardProps {
   slot: number
   revealing?: boolean
   compact?: boolean
-  portraitScale?: number
+  squadPortrait?: string
   skill?: OperatorSkill
   skillState?: DrawResult['skillState']
   operatorModule?: OperatorModule
@@ -27,7 +27,7 @@ export function OperatorCard({
   slot,
   revealing = false,
   compact = false,
-  portraitScale = 1.2,
+  squadPortrait,
   skill,
   skillState,
   operatorModule,
@@ -35,12 +35,19 @@ export function OperatorCard({
   expectedProfession,
   shortage = false,
 }: OperatorCardProps) {
-  const [imageSource, setImageSource] = useState(operator?.portrait)
+  const portraitCandidates = [
+    ...(squadPortrait ? [{ source: squadPortrait, kind: 'squad' as const }] : []),
+    ...(operator?.portrait ? [{ source: operator.portrait, kind: 'full' as const }] : []),
+    ...(operator?.portraitFallback ? [{ source: operator.portraitFallback, kind: 'full' as const }] : []),
+  ].filter((candidate, index, all) => all.findIndex((item) => item.source === candidate.source) === index)
+  const portraitSourceKey = JSON.stringify(portraitCandidates.map(({ source }) => source))
+  const [portraitFailure, setPortraitFailure] = useState<{ key: string; source: string }>()
+  const failedSource = portraitFailure?.key === portraitSourceKey ? portraitFailure.source : undefined
+  const imageSource = failedSource
+    ? nextPortraitSource(failedSource, portraitCandidates.map(({ source }) => source))
+    : portraitCandidates[0]?.source
+  const imageKind = portraitCandidates.find((candidate) => candidate.source === imageSource)?.kind
   const hasPortrait = Boolean(imageSource)
-
-  useEffect(() => {
-    setImageSource(operator?.portrait)
-  }, [operator?.id, operator?.portrait, operator?.portraitFallback])
 
   if (!operator) {
     if (expectedProfession) {
@@ -83,19 +90,13 @@ export function OperatorCard({
         <ProfessionIcon profession={expectedProfession ?? operator.profession} />
       </span>
       <Stars count={operator.rarity} compact={compact} />
-      <div className={`operator-card__portrait${hasPortrait ? '' : ' operator-card__portrait--fallback'}`}>
-        {hasPortrait ? (
+      <div className={`operator-card__portrait${imageKind === 'squad' ? ' operator-card__portrait--squad' : ''}${hasPortrait ? '' : ' operator-card__portrait--fallback'}`}>
+        {imageSource ? (
           <img
             src={imageSource}
             alt=""
-            style={{ transform: `scale(${portraitScale})` }}
             onError={() => {
-              const failedSource = imageSource
-              setImageSource((currentSource) => (
-                currentSource === failedSource
-                  ? nextPortraitSource(failedSource, operator.portraitFallback)
-                  : currentSource
-              ))
+              setPortraitFailure({ key: portraitSourceKey, source: imageSource })
             }}
           />
         ) : (

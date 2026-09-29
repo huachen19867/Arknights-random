@@ -2,15 +2,17 @@ import { useMemo, useState } from 'react'
 import { PROFESSIONS, RARITIES, type DrawSettings, type Operator } from '../types'
 import { ArrowIcon, BanIcon, SearchIcon } from '../components/Icons'
 import { OperatorCard } from '../components/OperatorCard'
+import type { SquadPortraitMap } from '../lib/squadPortraits'
 
 interface BanPageProps {
   operators: Operator[]
+  squadPortraits: SquadPortraitMap
   settings: DrawSettings
   onChange: (settings: DrawSettings) => void
   onBack: () => void
 }
 
-export function BanPage({ operators, settings, onChange, onBack }: BanPageProps) {
+export function BanPage({ operators, squadPortraits, settings, onChange, onBack }: BanPageProps) {
   const [query, setQuery] = useState('')
   const [rarity, setRarity] = useState('all')
   const [profession, setProfession] = useState('all')
@@ -134,7 +136,12 @@ export function BanPage({ operators, settings, onChange, onBack }: BanPageProps)
                   aria-pressed={isBanned}
                   onClick={() => toggleBan(operator.id)}
                 >
-                  <OperatorCard operator={operator} slot={index + 1} compact />
+                  <OperatorCard
+                    operator={operator}
+                    squadPortrait={squadPortraits[operator.id]}
+                    slot={index + 1}
+                    compact
+                  />
                   <span className="ban-card__state">
                     <BanIcon />
                     {isBanned ? '已 Ban' : '加入 Ban'}

@@ -1,0 +1,13 @@
+{
+  "startedAt": "2026-09-29T10:57:52.312Z",
+  "assetCommit": "b6baa8f81f473a9c27b12e1ebe6a0546c3258ee7",
+  "gameDataCommit": "a550f5e048bb94e7cdefc6eb97a4091f0c4c7add",
+  "total": 431,
+  "reused": 429,
+  "downloaded": 2,
+  "elite2": 397,
+  "base": 34,
+  "missing": [],
+  "failures": [],
+  "completedAt": "2026-09-29T10:58:08.973Z"
+}

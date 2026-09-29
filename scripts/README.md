@@ -117,3 +117,17 @@ npm.cmd run data:base:publish
 清单记录来源类型、来源指纹、SHA-256、字节数、格式、宽高和同步时间。来源指纹与文件哈希未变时直接复用；新增干员只下载新增项，附件替换会自动优先于 URL。任一项失败都会保留上一份正式快照和清单，Base 与快照启用 ID 不一致也会中止。旧文件不直接删除，而是改名为被 gitignore 排除的 `.stale`，同步报告写入 `scripts/data/portrait-sync-report.json` 供人工复核。
 
 三个 JSON 入口共用同一数据集形状：顶层包含 `schemaVersion`、`generatedAt`、`source`、`count`、`operators`；干员字段为 `id`、`name`、`rarity`、`profession`、`enabled`、`portrait`、`portraitKind`、`sourceUrl`、`updatedAt`、`skills`、`modules`。其中 `skills` 元素形如 `{ "index": 1, "name": "真银斩" }`，`modules` 元素形如 `{ "id": "R303:AFT-X", "index": 1, "name": "萨米的不灭心脏碎片", "code": "AFT-X", "sourceUrl": "https://prts.wiki/w/史尔特尔#模组" }`；对应字段未核验时可以省略，空数组表示已核验且确实没有。
+
+## 6. 编队卡片上身头像
+
+游戏编队卡片使用独立的上身头像。`npm.cmd run squad-portraits:sync` 从固定版本的 [ArknightsAssets2](https://github.com/ArknightsAssets/ArknightsAssets2) 游戏资源目录下载 PNG，并用同版本的 [ArknightsGameData](https://github.com/Kengxxiao/ArknightsGameData) 角色表按名称、职业和展示编号对应现有干员 ID。可精二的角色取游戏 `_2.png`，不能精二的低星角色取 `_1.png`。阿米娅三种形态按职业分别映射；不可获得的临时角色不会混入同名干员。
+
+输出为 `public/assets/squad-portraits/` 和 `public/data/squad-portraits.json`。清单中的 `portraits` 以现有 `operator.id` 为键、以无前导斜线的 `assets/squad-portraits/...` 为值，供前端按 Vite `BASE_URL` 解析；`items` 保留上游角色 ID、素材文件、精二/基础类别、Git blob SHA、SHA-256、尺寸和字节数。此流程与 Base/PRTS 立绘同步完全独立，不修改 `operators.json`、`scripts/data/prts-operators.json` 或原立绘目录。全部映射或下载成功后才原子发布新清单，失败详情写入 `scripts/data/squad-portrait-report.json`，已成功下载的文件可在下次重跑时按上游 Git SHA 复用。
+
+```powershell
+npm.cmd run squad-portraits:sync     # 上游同步，需网络；固定 commit 可在脚本顶部更新
+npm.cmd run squad-portraits:verify   # 离线核对干员数、映射、PNG 尺寸和全部校验和
+npm.cmd run squad-portraits:test     # 映射规则回归测试
+```
+
+同步角色表和图片时优先用已安装授权的 `gh api`；图片从固定 GitHub commit 的 Contents API 读取 base64 blob，并比对 Git SHA。没有 GitHub CLI 或 API 请求失败时改走公开的固定版本 raw URL。失效或篡改的本地缓存会重新下载。新增干员后应先确认固定上游版本包含其资源，再同步并通过离线校验，避免清单漏人。

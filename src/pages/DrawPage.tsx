@@ -1,4 +1,5 @@
 import type { DataSource, DrawResult, DrawSettings, Operator } from '../types'
+import type { SquadPortraitMap } from '../lib/squadPortraits'
 import { OperatorCard } from '../components/OperatorCard'
 import { ShuffleIcon } from '../components/Icons'
 import { getEffectiveDrawConfig } from '../lib/settings'
@@ -8,6 +9,7 @@ interface DrawPageProps {
   settings: DrawSettings
   candidates: Operator[]
   results: DrawResult[]
+  squadPortraits: SquadPortraitMap
   /** 自选职业模式的可满足名额统计；范围模式不传。 */
   planStats?: ProfessionSlotStats
   dataSource: DataSource
@@ -21,6 +23,7 @@ export function DrawPage({
   settings,
   candidates,
   results,
+  squadPortraits,
   planStats,
   dataSource,
   loading,
@@ -65,6 +68,7 @@ export function DrawPage({
                   key={`${index}-${result?.operator?.id ?? result?.expectedProfession ?? 'empty'}`}
                   slot={index + 1}
                   operator={result?.operator}
+                  squadPortrait={result?.operator ? squadPortraits[result.operator.id] : undefined}
                   expectedProfession={result?.expectedProfession}
                   shortage={result?.shortage}
                   skill={result?.skill}
@@ -109,7 +113,7 @@ export function DrawPage({
         <div className="status-strip" role="status">
           <span className={`source-light${dataSource === 'fallback' ? ' source-light--warning' : ''}`}></span>
           <span>
-            {dataSource === 'feishu-export' ? '飞书干员库快照已载入' : '当前为内置样例数据'}
+            {dataSource === 'feishu-export' ? '干员库快照已载入' : '当前为内置样例数据'}
           </span>
           <i></i>
           <span>{notice || defaultNotice}</span>

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-02T00:59:08.153Z",
+  "generatedAt": "2026-09-29T09:52:57.269Z",
   "output": "scripts/data/prts-operators.json",
   "options": {
     "allowRemovals": false,
@@ -12,15 +12,15 @@
   },
   "portraitResolution": {
     "reused": 423,
-    "checked": 4
+    "checked": 8
   },
   "skillResolution": {
     "reused": 427,
-    "fetched": 0
+    "fetched": 4
   },
   "moduleResolution": {
     "reused": 427,
-    "fetched": 0
+    "fetched": 4
   },
   "migratedPortraitCount": 0,
   "portraitExceptions": {
@@ -35,41 +35,41 @@
   },
   "validation": {
     "ok": true,
-    "count": 427,
+    "count": 431,
     "errors": [],
     "warnings": [],
     "rarityCounts": {
-      "1": 11,
+      "1": 12,
       "2": 5,
       "3": 17,
       "4": 61,
-      "5": 197,
-      "6": 136
+      "5": 199,
+      "6": 137
     },
     "professionCounts": {
       "先锋": 42,
-      "近卫": 84,
+      "近卫": 85,
       "重装": 48,
-      "狙击": 58,
+      "狙击": 59,
       "术师": 60,
       "医疗": 39,
-      "辅助": 47,
-      "特种": 49
+      "辅助": 48,
+      "特种": 50
     },
     "portraitCounts": {
-      "elite0": 425,
+      "elite0": 429,
       "elite2": 2
     },
     "skillCounts": {
-      "0": 16,
+      "0": 17,
       "1": 17,
-      "2": 257,
-      "3": 137,
+      "2": 259,
+      "3": 138,
       "unknown": 0
     },
     "moduleCounts": {
-      "0": 44,
-      "1": 288,
+      "0": 45,
+      "1": 291,
       "2": 80,
       "3": 15,
       "unknown": 0
@@ -77,12 +77,41 @@
   },
   "transitionErrors": [],
   "previousCount": 427,
-  "nextCount": 427,
+  "nextCount": 431,
   "unchangedCount": 427,
-  "additionCount": 0,
+  "additionCount": 4,
   "removalCount": 0,
   "changeCount": 0,
-  "additions": [],
+  "additions": [
+    {
+      "id": "PS33",
+      "prtsId": "PS33",
+      "name": "结城理",
+      "rarity": 6,
+      "profession": "特种"
+    },
+    {
+      "id": "PS34",
+      "prtsId": "PS34",
+      "name": "岳羽由加莉",
+      "rarity": 5,
+      "profession": "辅助"
+    },
+    {
+      "id": "PS37",
+      "prtsId": "PS37",
+      "name": "埃癸斯",
+      "rarity": 5,
+      "profession": "狙击"
+    },
+    {
+      "id": "PS38",
+      "prtsId": "PS38",
+      "name": "虎狼丸",
+      "rarity": 1,
+      "profession": "近卫"
+    }
+  ],
   "removals": [],
   "changes": []
 }

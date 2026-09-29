@@ -201,12 +201,20 @@ function htmlFragmentToText(fragment) {
   );
 }
 
+function h2Section(html, sectionId) {
+  const headings = [...html.matchAll(/<h2\b[^>]*>[\s\S]*?<\/h2>/gi)];
+  const escapedId = sectionId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const marker = new RegExp(`<\\b(?:h2|span)\\b[^>]*\\bid=["']${escapedId}["'][^>]*>`, 'i');
+  const index = headings.findIndex((heading) => marker.test(heading[0]));
+  if (index < 0) return undefined;
+  const start = headings[index].index + headings[index][0].length;
+  const end = headings[index + 1]?.index ?? html.length;
+  return html.slice(start, end);
+}
+
 export function parsePrtsSkills(html) {
-  const marker = html.search(/<span\b[^>]*\bid=["']技能["'][^>]*>/i);
-  if (marker < 0) throw new Error('PRTS 页面缺少技能章节，页面结构可能已改变');
-  const tail = html.slice(marker);
-  const nextHeadingOffset = tail.slice(1).search(/<h2\b/i);
-  const section = nextHeadingOffset < 0 ? tail : tail.slice(0, nextHeadingOffset + 1);
+  const section = h2Section(html, '技能');
+  if (section === undefined) throw new Error('PRTS 页面缺少技能章节，页面结构可能已改变');
   const headings = [...section.matchAll(/<p>\s*<b>\s*技能\s*([1-3])(?:[^<]*)<\/b>\s*<\/p>/gi)];
   if (headings.length === 0) {
     if (htmlFragmentToText(section).includes('该干员没有技能')) return [];
@@ -239,11 +247,8 @@ export function parsePrtsSkills(html) {
 }
 
 export function parsePrtsModules(html) {
-  const marker = html.search(/<span\b[^>]*\bid=["']模组["'][^>]*>/i);
-  if (marker < 0) return [];
-  const tail = html.slice(marker);
-  const nextHeadingOffset = tail.slice(1).search(/<h2\b/i);
-  const section = nextHeadingOffset < 0 ? tail : tail.slice(0, nextHeadingOffset + 1);
+  const section = h2Section(html, '模组');
+  if (section === undefined) return [];
   const headings = [...section.matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>/gi)];
   const modules = [];
   const seenCodes = new Set();

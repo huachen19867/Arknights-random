@@ -6,6 +6,10 @@
 
 ## 当前状态
 
+2026-09-29 已补齐至 **431 名干员**，新增虎狼丸、埃癸斯、岳羽由加莉、结城理。四人的技能、模组和图片均已核验并补录飞书 Base；重新导出的正式快照包含 431 名干员、496 条模组。编队卡面全部改用游戏原生上身图，其中精二 397 张、基础 34 张，原全身图保留作故障兜底。
+
+以下为此前数据迁移记录：
+
 2026-08-12 已验证 427 名启用干员、427 个唯一 ID、0 个空立绘、0 个未知技能或模组数据。战斗技能数量分布为 0 / 1 / 2 / 3 个技能分别 16 / 17 / 257 / 137 名；夜刀等低星干员的 `skills: []` 表示 PRTS 已确认没有战斗技能，不是漏抓。正式立绘已统一迁移为精零（`_1.png`，425 名）；阿米娅(医疗)/(近卫) 因 PRTS 无精零立绘文件登记为精二例外（见 config/portrait-exceptions.json）。427 张立绘已经下载、验图并随站点发布（425 WebP、2 PNG，约 34 MiB）。为恢复更快的显示体验，网页优先读取飞书“立绘URL”中的 PRTS 优化图，外链失败时自动切换到对应本站立绘；第二次同步实测 427 张全部增量复用。模组数据已采集：无模组 44 名、1 个 288 名、2 个 80 名、3 个 15 名，unknown 0。数据自检 79 项、前端测试 60 项、统计 Worker 测试 40 项和生产构建均通过。
 
 在线地址：
@@ -15,7 +19,17 @@
 
 仓库推送到 `main` 后会由 GitHub Actions 自动复跑数据校验、前端测试和子路径构建，并部署到 GitHub Pages；Cloudflare Pages 当前采用本地生产构建直传。
 
+## 编队上身卡面
+
+编队卡片使用游戏预裁切的上身卡面：可精二干员优先精二，低星使用基础卡面。卡面资源与飞书立绘字段分开维护，由 `public/data/squad-portraits.json` 映射到 `public/assets/squad-portraits/`，无需改写飞书数据。原立绘保留作图片加载失败的兜底。
+
+素材复用 [ArknightsAssets2](https://github.com/ArknightsAssets/ArknightsAssets2/tree/cn) 的游戏 `charportraits`，角色对应关系使用游戏数据表；运行 `npm run squad-portraits:sync` 同步，`npm run squad-portraits:verify` 离线校验。具体同步命令及来源记录见 [scripts/README.md](scripts/README.md)。游戏图片权利归原权利人，资源仓库的可访问性不代表授予了图片再许可。
+
 ## 界面截图
+
+![精二上身编队卡面](screenshots/squad-portraits-desktop.png)
+
+人物卡面直接使用游戏上身图，底部斜条为半透明。多星级、异格与阿米娅三形态可在 `#/portrait-test` 检查；下方旧截图用于说明职业配置功能。
 
 ![自选职业模式主界面](screenshots/main-profession-plan.png)
 
