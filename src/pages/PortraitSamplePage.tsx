@@ -1,52 +1,74 @@
 import { OperatorCard } from '../components/OperatorCard'
+import type { SquadPortraitMap } from '../lib/squadPortraits'
 import type { Operator } from '../types'
 
-const SAMPLE_NAMES = ['银灰', '艾雅法拉', '能天使', '史尔特尔', '泥岩']
+const SAMPLE_IDS = [
+  'KZ15',
+  'A41',
+  'BS04',
+  'AA04',
+  'R001:术师',
+  'R001:医疗',
+  'R001:近卫',
+  'B00W',
+  'JC01',
+  'LN02',
+  'PL07',
+]
 
 interface PortraitSamplePageProps {
   operators: Operator[]
+  squadPortraits: SquadPortraitMap
+  portraitsLoading: boolean
   onBack: () => void
 }
 
-export function PortraitSamplePage({ operators, onBack }: PortraitSamplePageProps) {
-  const samples = SAMPLE_NAMES.map((name) => operators.find((operator) => operator.name === name)).filter(
-    (operator): operator is Operator => Boolean(operator),
-  )
+export function PortraitSamplePage({
+  operators,
+  squadPortraits,
+  portraitsLoading,
+  onBack,
+}: PortraitSamplePageProps) {
+  const operatorsById = new Map(operators.map((operator) => [operator.id, operator]))
+  const samples = SAMPLE_IDS
+    .map((id) => operatorsById.get(id))
+    .filter((operator): operator is Operator => Boolean(operator))
 
   return (
-    <main className="panel-page portrait-sample-page" data-screen-label="立绘缩放样本">
+    <main className="panel-page portrait-sample-page" data-screen-label="精二上身卡片样本">
       <section className="portrait-sample-panel" aria-labelledby="portrait-sample-title">
         <div className="panel-titlebar">
           <button className="portrait-sample-back" type="button" onClick={onBack}>
             返回抽取页
           </button>
           <div>
-            <span className="eyebrow">PORTRAIT SCALE TEST / 01</span>
-            <h1 id="portrait-sample-title">中心放大 30% 样本</h1>
+            <span className="eyebrow">SQUAD PORTRAIT REVIEW / 01</span>
+            <h1 id="portrait-sample-title">精二上身卡片样本</h1>
           </div>
         </div>
 
         <p className="portrait-sample-note">
-          每组左侧为当前效果，右侧为保持图片中心不变并放大至 130%。卡片框、名称与遮罩均保持正式产品尺寸逻辑。
+          卡面使用独立的游戏内上身素材，人物从卡片顶部铺开，底部信息条覆盖胸口区域；失败时沿用现有立绘与本地备用图。低星干员没有精二阶段时展示对应可用卡面。
         </p>
 
-        <div className="portrait-sample-grid">
-          {samples.map((operator, index) => (
-            <section className="portrait-sample" key={operator.id} aria-labelledby={`sample-${operator.id}`}>
-              <h2 id={`sample-${operator.id}`}>{operator.name}</h2>
-              <div className="portrait-sample__pair">
-                <div>
-                  <span>当前 100%</span>
-                  <OperatorCard operator={operator} slot={index + 1} compact />
-                </div>
-                <div>
-                  <span>中心 130%</span>
-                  <OperatorCard operator={operator} slot={index + 1} compact portraitScale={1.3} />
-                </div>
-              </div>
-            </section>
-          ))}
-        </div>
+        {portraitsLoading ? (
+          <p className="portrait-sample-loading" role="status">正在读取编队上身卡面…</p>
+        ) : (
+          <div className="portrait-sample-grid">
+            {samples.map((operator, index) => (
+              <section className="portrait-sample" key={operator.id} aria-labelledby={`sample-${operator.id}`}>
+                <h2 id={`sample-${operator.id}`}>{operator.name}</h2>
+                <p>{operator.rarity} 星 · {operator.profession}</p>
+                <OperatorCard
+                  operator={operator}
+                  squadPortrait={squadPortraits[operator.id]}
+                  slot={index + 1}
+                  compact
+                />
+              </section>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   )

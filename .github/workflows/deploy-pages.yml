@@ -33,6 +33,12 @@ jobs:
       - name: Validate data
         run: npm run data:test
 
+      - name: Test squad portrait mapping
+        run: npm run squad-portraits:test
+
+      - name: Verify squad portrait assets
+        run: npm run squad-portraits:verify
+
       - name: Run frontend tests
         run: npm test
 

@@ -58,7 +58,7 @@ function buildRandomNotices(results: DrawResult[], settings: DrawSettings): stri
 }
 
 export function App() {
-  const { operators, source, loading } = useOperatorData()
+  const { operators, squadPortraits, squadPortraitsLoading, source, loading } = useOperatorData()
   const [settings, setSettings] = useState<DrawSettings>(() => loadSettings(window.localStorage))
   const [page, setPage] = useState<AppPage>(pageFromHash)
   const [results, setResults] = useState<DrawResult[]>([])
@@ -218,15 +218,23 @@ export function App() {
         />
       )}
       {page === 'ban' && (
-        <BanPage operators={operators} settings={settings} onChange={setSettings} onBack={() => navigate('draw')} />
+        <BanPage operators={operators} squadPortraits={squadPortraits} settings={settings} onChange={setSettings} onBack={() => navigate('draw')} />
       )}
 
-      {page === 'portrait-test' && <PortraitSamplePage operators={operators} onBack={() => navigate('draw')} />}
+      {page === 'portrait-test' && (
+        <PortraitSamplePage
+          operators={operators}
+          squadPortraits={squadPortraits}
+          portraitsLoading={squadPortraitsLoading}
+          onBack={() => navigate('draw')}
+        />
+      )}
       {page === 'draw' && (
         <DrawPage
           settings={settings}
           candidates={candidates}
           results={results}
+          squadPortraits={squadPortraits}
           planStats={planStats}
           dataSource={source}
           loading={loading}

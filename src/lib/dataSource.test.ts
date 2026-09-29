@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveAssetUrl, resolveOperatorsUrl } from './dataSource'
+import { resolveAssetUrl, resolveOperatorsUrl, resolveSquadPortraitsUrl } from './dataSource'
 
 describe('resolveOperatorsUrl', () => {
   it('支持根路径部署', () => {
@@ -13,6 +13,14 @@ describe('resolveOperatorsUrl', () => {
 
   it('支持相对 base 路径', () => {
     expect(resolveOperatorsUrl('./')).toBe('./data/operators.json')
+  })
+})
+
+describe('resolveSquadPortraitsUrl', () => {
+  it('支持根路径及 GitHub Pages 子路径', () => {
+    expect(resolveSquadPortraitsUrl('/')).toBe('/data/squad-portraits.json')
+    expect(resolveSquadPortraitsUrl('/arknights-random'))
+      .toBe('/arknights-random/data/squad-portraits.json')
   })
 })
 
